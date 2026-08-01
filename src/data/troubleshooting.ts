@@ -332,7 +332,7 @@ export const TROUBLESHOOTING_GUIDE: GuideSection[] = [
     ],
     checks: [
       "NVIDIA: per-link state via NVSM / HMC / fabric manager logs",
-      "Map errors to NVS tray vs CT vs rear cartridge (CC1–CC4)",
+      "Map errors to NVS tray vs CT vs rear cartridge (CC0–CC3)",
       "Dell: tray seating, latches, rear CC mate depth",
       "Firmware alignment: switch tray + GPU + HMC (Dell bundle preferred)",
     ],
@@ -352,7 +352,7 @@ export const TROUBLESHOOTING_GUIDE: GuideSection[] = [
   {
     id: "cartridge-bent-pins",
     category: "Fabric",
-    title: "Rear cable cartridge bent / damaged pins (CC1–CC4)",
+    title: "Rear cable cartridge bent / damaged pins (CC0–CC3)",
     severity: "critical",
     vendor: "dell",
     summary:
@@ -366,7 +366,7 @@ export const TROUBLESHOOTING_GUIDE: GuideSection[] = [
     checks: [
       "Power down and isolate before inspecting pin field",
       "Light + magnification only — no metal tools on pins",
-      "Affinity: CC1≈CT1–5, CC2≈CT6–9, CC3≈CT10–14, CC4≈CT15–18",
+      "Affinity: CC0≈CT1–5, CC1≈CT6–9, CC2≈CT10–14, CC3≈CT15–18",
       "Guide pins, debris, cage latch, and node-side connector",
     ],
     actions: [
@@ -377,7 +377,7 @@ export const TROUBLESHOOTING_GUIDE: GuideSection[] = [
       "ProSupport: Service Tag + CC# + pin-field photos",
     ],
     relatedKinds: ["cartridge", "compute", "switch"],
-    tags: ["bent pins", "CC1", "CC2", "CC3", "CC4", "mate", "FRU"],
+    tags: ["bent pins", "CC0", "CC1", "CC2", "CC3", "mate", "FRU"],
     sources: ["Dell rear cable cartridge service / pin inspection"],
   },
   {
@@ -1162,7 +1162,7 @@ export const TROUBLESHOOTING_GUIDE: GuideSection[] = [
       "FacOps proves facility plant secondary flow before IT load (outside hall)",
       "PS33 both banks green; no leak sensors (Dell)",
       "All CT1–18 and NVS1–9 present (Dell OME + NVIDIA inventory)",
-      "CC1–4 latched; no pin damage (Dell)",
+      "CC0–3 latched; no pin damage (Dell)",
       "NVLink domain trains clean; CX-8/BF3 up (NVIDIA + Dell)",
     ],
     actions: [

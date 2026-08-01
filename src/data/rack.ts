@@ -39,7 +39,7 @@ export type RackPart = {
  * Dell IR9048 elevation (bottom → top, front):
  *   PS33×4 bottom → CT1–8 → NVS1–9 → CT9–18 → PS33×4 top → OOB
  *
- * Rear: 4 NVLink cable cartridges (CC1–CC4) that CT/NVS nodes blind-mate into.
+ * Rear: 4 NVLink cable cartridges (CC0–CC3) that CT/NVS nodes blind-mate into.
  * Facility cooling (CDU plant) is outside the data hall — FacOps, not this SU model.
  */
 export const RACK_SPECS = {
@@ -58,7 +58,7 @@ export const RACK_SPECS = {
   cableCartridges: 4,
   powerLayout: "4 PS33 bottom · 4 PS33 top",
   stackOrder: "PS33 top · CT18–9 · NVS9–1 · CT8–1 · PS33 bottom",
-  rear: "4× NVLink cable cartridges (CC1–CC4)",
+  rear: "4× NVLink cable cartridges (CC0–CC3)",
   cooling: "In-rack DLC manifolds/QDCs · facility plant is FacOps (outside hall)",
   nvlinkBandwidth: "130 TB/s aggregate NVLink",
   gpuMemory: "288 GB HBM3e × 72 (~20 TB)",
@@ -82,22 +82,22 @@ export const COMPONENT_COLORS: Record<ComponentKind, string> = {
 /** Node groups that blind-mate into each rear cable cartridge. */
 export const CARTRIDGE_MAP = [
   {
-    n: 1,
+    n: 0,
     matesTo: "CT1–CT5 + NVS path A",
     detail: "Lower-left CT group and associated NVLink lanes into NVS fabric",
   },
   {
-    n: 2,
+    n: 1,
     matesTo: "CT6–CT9 + NVS path B",
     detail: "Lower/mid CT group and NVLink lanes into NVS fabric",
   },
   {
-    n: 3,
+    n: 2,
     matesTo: "CT10–CT14 + NVS path C",
     detail: "Upper-mid CT group and NVLink lanes into NVS fabric",
   },
   {
-    n: 4,
+    n: 3,
     matesTo: "CT15–CT18 + NVS path D",
     detail: "Upper CT group and NVLink lanes into NVS fabric",
   },
@@ -131,7 +131,7 @@ function makeCompute(n: number, u: number, zone: RackZone): RackPart {
   const bank =
     zone === "ct-low" ? "Lower bank (CT1–CT8)" : "Upper bank (CT9–CT18)";
   const cartridge =
-    n <= 5 ? "CC1" : n <= 9 ? "CC2" : n <= 14 ? "CC3" : "CC4";
+    n <= 5 ? "CC0" : n <= 9 ? "CC1" : n <= 14 ? "CC2" : "CC3";
 
   return {
     id: `ct-${n}`,
@@ -170,11 +170,11 @@ function makeNvs(n: number, u: number): RackPart {
     shortLabel: `NVS${n}`,
     uStart: u,
     uHeight: 1,
-    description: `NVLink switch tray NVS${n}. Connects through the four rear cable cartridges (CC1–CC4) to all CT nodes. Cartridge pin damage or elevated BER shows up as NVLink CRC/replay on paths through this switch.`,
+    description: `NVLink switch tray NVS${n}. Connects through the four rear cable cartridges (CC0–CC3) to all CT nodes. Cartridge pin damage or elevated BER shows up as NVLink CRC/replay on paths through this switch.`,
     specs: [
       { label: "Tray ID", value: `NVS${n}` },
       { label: "Bank", value: "Middle fabric (NVS1–NVS9)" },
-      { label: "Rear path", value: "CC1–CC4 cable cartridges" },
+      { label: "Rear path", value: "CC0–CC3 cable cartridges" },
       { label: "NVSwitch ASICs", value: "2 per tray" },
       { label: "Rack aggregate", value: "130 TB/s NVLink" },
     ],
@@ -183,7 +183,7 @@ function makeNvs(n: number, u: number): RackPart {
 }
 
 function makeCartridge(n: number): RackPart {
-  const map = CARTRIDGE_MAP[n - 1]!;
+  const map = CARTRIDGE_MAP.find((c) => c.n === n)!;
   return {
     id: `cc-${n}`,
     kind: "cartridge",
@@ -196,7 +196,7 @@ function makeCartridge(n: number): RackPart {
     matesTo: map.matesTo,
     description: `Rear NVLink cable cartridge CC${n}. CT and NVS trays blind-mate into high-density connectors on this cartridge at the back of the IR9048. Common field failures: bent/pushed pins on mate, incomplete seating after sled service, and elevated BER / CRC on NVLink lanes that traverse this cartridge.`,
     specs: [
-      { label: "Cartridge", value: `CC${n} of 4` },
+      { label: "Cartridge", value: `CC${n} (0–3)` },
       { label: "Location", value: "Rear of IR9048 (behind CT/NVS)" },
       { label: "Mates to", value: map.matesTo },
       { label: "Role", value: "NVLink copper path · node ↔ NVS fabric" },
@@ -288,7 +288,7 @@ function buildLayout(): RackPart[] {
     color: COMPONENT_COLORS.management,
   });
 
-  for (let n = 1; n <= 4; n++) {
+  for (let n = 0; n <= 3; n++) {
     parts.push(makeCartridge(n));
   }
 
@@ -332,7 +332,7 @@ export const ELEVATION_TOP_DOWN = [
   },
   {
     id: "cartridges",
-    label: "CC1 – CC4 (rear)",
+    label: "CC0 – CC3 (rear)",
     detail: "Cable cartridges · nodes blind-mate",
     kind: "cartridge" as const,
   },
@@ -346,7 +346,7 @@ export function getPart(id: string | null): RackPart | undefined {
 export const KIND_LEGEND: { kind: ComponentKind; label: string; count: string }[] = [
   { kind: "compute", label: "CT trays", count: "CT1–18" },
   { kind: "switch", label: "NVS trays", count: "NVS1–9" },
-  { kind: "cartridge", label: "Cable cart.", count: "CC1–4 rear" },
+  { kind: "cartridge", label: "Cable cart.", count: "CC0–3 rear" },
   { kind: "power", label: "PS33", count: "4+4" },
   { kind: "manifold", label: "DLC manifolds", count: "In-rack" },
   { kind: "management", label: "OOB / iDRAC", count: "SN2201" },

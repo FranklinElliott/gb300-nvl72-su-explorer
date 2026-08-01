@@ -70,7 +70,7 @@ export function DetailPanel({ selectedId, onClose, onOpenGuide }: DetailPanelPro
           {[
             { k: "CT trays", v: "CT1–CT18" },
             { k: "NVS trays", v: "NVS1–NVS9" },
-            { k: "Cable cart.", v: "CC1–CC4 rear" },
+            { k: "Cable cart.", v: "CC0–CC3 rear" },
             { k: "PS33", v: "4 top + 4 bottom" },
             { k: "Cooling", v: "DLC · FacOps plant" },
             { k: "Watch", v: "Bent pins · BER" },
@@ -89,7 +89,7 @@ export function DetailPanel({ selectedId, onClose, onOpenGuide }: DetailPanelPro
 
         <p className="text-sm leading-relaxed text-muted">
           Nodes blind-mate into <span className="font-medium text-fg">four rear cable cartridges</span>
-          . Use <span className="font-medium text-fg">Rear</span> view to inspect CC1–CC4. Field
+          . Use <span className="font-medium text-fg">Rear</span> view to inspect CC0–CC3. Field
           issues: bent pins on mate and elevated NVLink BER/CRC on a cartridge path.
         </p>
       </div>

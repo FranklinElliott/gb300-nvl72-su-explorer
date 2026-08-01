@@ -54,7 +54,7 @@ function Home() {
                 Dell XE9712 · GB300 NVL72
               </h1>
               <p className="truncate font-mono text-[10px] text-muted md:text-[11px]">
-                CT/NVS · CC1–4 rear · PS33 4+4 · DLC
+                CT/NVS · CC0–3 rear · PS33 4+4 · DLC
               </p>
             </div>
           </div>
@@ -166,7 +166,7 @@ function Home() {
               <Info className="size-3" />
               Rear cartridges
             </div>
-            <span className="text-fg">CC1–CC4</span> carry NVLink copper from CT/NVS blind-mates.
+            <span className="text-fg">CC0–CC3</span> carry NVLink copper from CT/NVS blind-mates.
             Watch for <span className="text-fg">bent pins</span> and elevated{" "}
             <span className="text-fg">BER/CRC</span> after sled service.
           </div>

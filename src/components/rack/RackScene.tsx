@@ -529,8 +529,8 @@ export function RackScene(props: RackSceneProps) {
       </Canvas>
       <div className="pointer-events-none absolute bottom-3 left-3 rounded-md border border-border bg-surface/80 px-2.5 py-1.5 font-mono text-[10px] text-muted backdrop-blur-sm">
         {props.viewMode === "rear"
-          ? "Rear view · CC1–CC4 cable cartridges · bent pins / BER"
-          : "Front view · orbit · click trays · Rear for CC1–4"}
+          ? "Rear view · CC0–CC3 cable cartridges · bent pins / BER"
+          : "Front view · orbit · click trays · Rear for CC0–3"}
       </div>
     </div>
   );
