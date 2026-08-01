@@ -1,5 +1,11 @@
 import { X, Cpu, Zap, Network, Droplets, Server } from "lucide-react";
-import { getPart, RACK_SPECS, type ComponentKind } from "@/data/rack";
+import {
+  ELEVATION_TOP_DOWN,
+  getPart,
+  RACK_SPECS,
+  COMPONENT_COLORS,
+  type ComponentKind,
+} from "@/data/rack";
 import { cn } from "@/lib/utils";
 
 const KIND_ICON: Record<ComponentKind, typeof Cpu> = {
@@ -35,16 +41,38 @@ export function DetailPanel({ selectedId, onClose, onOpenGuide }: DetailPanelPro
           </p>
         </div>
 
+        <div>
+          <h3 className="font-mono text-[11px] uppercase tracking-wider text-subtle">
+            Front elevation · top → bottom
+          </h3>
+          <ol className="mt-2 space-y-1.5">
+            {ELEVATION_TOP_DOWN.map((row, i) => (
+              <li
+                key={row.id}
+                className="flex items-center gap-3 rounded-lg border border-border bg-surface-2 px-3 py-2"
+              >
+                <span className="font-mono text-[10px] text-subtle w-4">{i + 1}</span>
+                <span
+                  className="size-2.5 shrink-0 rounded-full"
+                  style={{ backgroundColor: COMPONENT_COLORS[row.kind] }}
+                />
+                <div className="min-w-0 flex-1">
+                  <div className="text-sm font-semibold tabular-nums text-fg">{row.label}</div>
+                  <div className="text-[11px] text-muted">{row.detail}</div>
+                </div>
+              </li>
+            ))}
+          </ol>
+        </div>
+
         <div className="grid grid-cols-2 gap-2">
           {[
             { k: "GPUs", v: String(RACK_SPECS.gpus) },
             { k: "Grace CPUs", v: String(RACK_SPECS.cpus) },
-            { k: "XE9712 sleds", v: String(RACK_SPECS.computeTrays) },
-            { k: "NVLink trays", v: String(RACK_SPECS.switchTrays) },
-            { k: "PS33 shelves", v: String(RACK_SPECS.powerShelves) },
+            { k: "CT trays", v: "CT1–CT18" },
+            { k: "NVS trays", v: "NVS1–NVS9" },
+            { k: "PS33", v: String(RACK_SPECS.powerShelves) },
             { k: "NVLink", v: RACK_SPECS.nvlinkBandwidth },
-            { k: "GPU memory", v: RACK_SPECS.gpuMemory },
-            { k: "Management", v: "iDRAC / OME" },
           ].map((row) => (
             <div
               key={row.k}
@@ -59,24 +87,15 @@ export function DetailPanel({ selectedId, onClose, onOpenGuide }: DetailPanelPro
         </div>
 
         <p className="text-sm leading-relaxed text-muted">
-          Click any tray in the 3D IR9048 rack to inspect PowerEdge XE9712 sleds, NVLink
-          switches, PS33 power, DLC manifolds, or OOB management. One SU = one liquid-cooled
-          Dell Integrated Rack with 72 Blackwell Ultra GPUs as a single NVLink domain.
+          Stack order matches the Dell NVL72 elevation: upper compute bank{" "}
+          <span className="font-medium text-fg">CT18–CT9</span>, middle fabric{" "}
+          <span className="font-medium text-fg">NVS9–NVS1</span>, lower compute bank{" "}
+          <span className="font-medium text-fg">CT8–CT1</span>, over PS33 power.
         </p>
 
-        <div className="mt-auto space-y-2 rounded-lg border border-border bg-surface-2 p-3 text-xs text-muted">
-          <div>
-            <span className="font-medium text-fg">Rack: </span>
-            {RACK_SPECS.dimensions}
-          </div>
-          <div>
-            <span className="font-medium text-fg">Support: </span>
-            {RACK_SPECS.support}
-          </div>
-          <div>
-            <span className="font-medium text-fg">Tip: </span>
-            Use Explode view or filter chips to isolate subsystem classes.
-          </div>
+        <div className="mt-auto rounded-lg border border-border bg-surface-2 p-3 text-xs text-muted">
+          <span className="font-medium text-fg">Tip: </span>
+          Click any CT or NVS tray in the 3D rack. Use filters to isolate CT vs NVS banks.
         </div>
       </div>
     );
@@ -97,7 +116,7 @@ export function DetailPanel({ selectedId, onClose, onOpenGuide }: DetailPanelPro
           <div>
             <p className="font-mono text-[11px] uppercase tracking-wider text-muted">
               U{part.uStart}
-              {part.uHeight > 1 ? `–U${part.uStart + part.uHeight - 1}` : ""} · {part.kind}
+              {part.uHeight > 1 ? `–U${part.uStart + part.uHeight - 1}` : ""} · {part.shortLabel}
             </p>
             <h2 className="text-lg font-semibold tracking-tight text-fg md:text-xl">
               {part.label}

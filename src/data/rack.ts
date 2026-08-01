@@ -6,9 +6,12 @@ export type ComponentKind =
   | "management"
   | "frame";
 
+export type RackZone = "power" | "ct-low" | "nvs" | "ct-high" | "mgmt" | "service";
+
 export type RackPart = {
   id: string;
   kind: ComponentKind;
+  zone: RackZone;
   label: string;
   shortLabel: string;
   uStart: number;
@@ -19,8 +22,11 @@ export type RackPart = {
 };
 
 /**
- * Dell Integrated Rack Scalable System — one SU:
- * PowerEdge XE9712 (GB300 NVL72) sleds in IR9048 ORv3 rack.
+ * Dell IR9048 front elevation (bottom → top):
+ *   PS33 power → CT1–CT8 → NVS1–NVS9 → CT9–CT18 → OOB / service
+ *
+ * Top-down label order (as operators often call it):
+ *   CT18–CT9 · NVS9–NVS1 · CT8–CT1
  */
 export const RACK_SPECS = {
   name: "Dell PowerEdge XE9712",
@@ -35,6 +41,7 @@ export const RACK_SPECS = {
   computeTrays: 18,
   switchTrays: 9,
   powerShelves: 8,
+  stackOrder: "CT18–9 · NVS9–1 · CT8–1 (top → bottom)",
   nvlinkBandwidth: "130 TB/s aggregate NVLink",
   gpuMemory: "288 GB HBM3e × 72 (~20 TB)",
   cpuMemory: "Up to 480 GB LPDDR5 / Grace",
@@ -53,26 +60,84 @@ export const COMPONENT_COLORS: Record<ComponentKind, string> = {
   frame: "#4b5563",
 };
 
+function makeCompute(n: number, u: number, zone: RackZone): RackPart {
+  const bank =
+    zone === "ct-low"
+      ? "Lower bank (CT1–CT8)"
+      : zone === "ct-high"
+        ? "Upper bank (CT9–CT18)"
+        : "Compute bank";
+
+  return {
+    id: `ct-${n}`,
+    kind: "compute",
+    zone,
+    label: `CT${n} · PowerEdge XE9712`,
+    shortLabel: `CT${n}`,
+    uStart: u,
+    uHeight: 1,
+    description: `Dell PowerEdge XE9712 compute tray CT${n} (${bank}). 4× NVIDIA Blackwell Ultra (B300) GPUs + 2× NVIDIA Grace CPUs, DLC cold plates, ConnectX-8 east/west, BlueField-3 SuperNIC, iDRAC/OpenBMC to NVIDIA HMC.`,
+    specs: [
+      { label: "Tray ID", value: `CT${n}` },
+      { label: "Bank", value: bank },
+      { label: "GPUs", value: "4 × B300 Blackwell Ultra · 288 GB HBM3e ea." },
+      { label: "CPUs", value: "2 × Grace · 72 Arm cores each" },
+      { label: "CPU memory", value: "Up to 480 GB LPDDR5 / Grace" },
+      { label: "C2C / NVLink-C2C", value: "900 GB/s coherent class" },
+      { label: "East/West", value: "4× OSFP · ConnectX-8 SuperNICs" },
+      { label: "North/South", value: "1× BlueField-3 SuperNIC" },
+      { label: "Storage", value: "M.2 boot + up to 8× E1.S NVMe" },
+      { label: "Management", value: "iDRAC 10 / OpenBMC · AST2600" },
+    ],
+    color: COMPONENT_COLORS.compute,
+  };
+}
+
+function makeNvs(n: number, u: number): RackPart {
+  return {
+    id: `nvs-${n}`,
+    kind: "switch",
+    zone: "nvs",
+    label: `NVS${n} · NVLink Switch Tray`,
+    shortLabel: `NVS${n}`,
+    uStart: u,
+    uHeight: 1,
+    description: `NVLink switch tray NVS${n} (middle fabric bank NVS1–NVS9). Two NVSwitch ASICs (5th-gen NVLink) completing the non-blocking all-to-all domain for all 72 GPUs across CT1–CT18.`,
+    specs: [
+      { label: "Tray ID", value: `NVS${n}` },
+      { label: "Bank", value: "Middle fabric (NVS1–NVS9)" },
+      { label: "NVSwitch ASICs", value: "2 per tray" },
+      { label: "Generation", value: "NVLink 5th gen" },
+      { label: "Domain", value: "Single-rack L1 (no inter-rack NVLink)" },
+      { label: "Rack aggregate", value: "130 TB/s NVLink" },
+      { label: "Peers", value: "CT1–CT18 (18 × XE9712)" },
+    ],
+    color: COMPONENT_COLORS.switch,
+  };
+}
+
 function buildLayout(): RackPart[] {
   const parts: RackPart[] = [];
   let u = 1;
 
+  // --- Bottom: PS33 power domain ---
   for (let i = 0; i < 8; i++) {
     parts.push({
       id: `psu-${i + 1}`,
       kind: "power",
+      zone: "power",
       label: `Dell PS33 Power Shelf ${i + 1}`,
       shortLabel: `PS33-${i + 1}`,
       uStart: u,
       uHeight: 1,
       description:
-        "Dell IR9048 33 kW power shelf (PS33) with six 5.5 kW AC PSUs. Delivers up to ~54 VDC over the ORv3 busbar to PowerEdge XE9712 sleds and rack components — no traditional per-node PDUs.",
+        "Dell IR9048 33 kW power shelf (PS33) with six 5.5 kW AC PSUs. Delivers up to ~54 VDC over the ORv3 busbar to CT/NVS trays — base of the IR9048 stack.",
       specs: [
         { label: "Model", value: "PS33 · 33 kW" },
         { label: "PSUs / shelf", value: "6 × 5500 W AC" },
         { label: "DC output", value: "Up to ~54 VDC busbar" },
         { label: "Rack shelves", value: "8 × PS33" },
-        { label: "Rack draw class", value: "~132–142 kW" },
+        { label: "Position", value: "Bottom of IR9048" },
       ],
       color: COMPONENT_COLORS.power,
     });
@@ -82,89 +147,55 @@ function buildLayout(): RackPart[] {
   parts.push({
     id: "manifold-lower",
     kind: "manifold",
-    label: "DLC Manifold & Leak Detection",
-    shortLabel: "DLC",
+    zone: "service",
+    label: "Lower DLC Manifold & Leak Sensors",
+    shortLabel: "DLC-L",
     uStart: u,
-    uHeight: 2,
+    uHeight: 1,
     description:
-      "Direct Liquid Cooling distribution for the IR9048 Integrated Rack — supply/return manifolds, quick-disconnects to XE9712 and NVLink switch cold plates, tray- and rack-level leak sensing.",
+      "Lower Direct Liquid Cooling manifold and leak detection under the CT1–CT8 bank.",
     specs: [
-      { label: "Cooling", value: "Dell DLC + residual air" },
-      { label: "Rack", value: "IR9048 ORv3 IRSS" },
+      { label: "Cooling", value: "Dell DLC" },
+      { label: "Serves", value: "CT1–CT8 primarily" },
       { label: "Leak detection", value: "Tray + rack sensors" },
-      { label: "Facility interface", value: "CDU / facility loop" },
     ],
     color: COMPONENT_COLORS.manifold,
   });
-  u += 2;
+  u += 1;
 
-  let computeIdx = 1;
-  let switchIdx = 1;
-  for (let group = 0; group < 9; group++) {
-    for (let c = 0; c < 2; c++) {
-      const n = computeIdx++;
-      parts.push({
-        id: `compute-${n}`,
-        kind: "compute",
-        label: `PowerEdge XE9712 Sled ${n}`,
-        shortLabel: `XE9712-${n}`,
-        uStart: u,
-        uHeight: 1,
-        description:
-          "Dell PowerEdge XE9712 1U compute sled: 4× NVIDIA Blackwell Ultra (B300) GPUs + 2× NVIDIA Grace CPUs, Direct Liquid Cooling cold plates, ConnectX-8 east/west, BlueField-3 SuperNIC, iDRAC/OpenBMC management path to NVIDIA HMC.",
-        specs: [
-          { label: "GPUs", value: "4 × B300 Blackwell Ultra · 288 GB HBM3e ea." },
-          { label: "CPUs", value: "2 × Grace · 72 Arm cores each" },
-          { label: "CPU memory", value: "Up to 480 GB LPDDR5 / Grace" },
-          { label: "C2C / NVLink-C2C", value: "900 GB/s coherent class" },
-          { label: "East/West", value: "4× OSFP · ConnectX-8 SuperNICs" },
-          { label: "North/South", value: "1× BlueField-3 SuperNIC" },
-          { label: "Storage", value: "M.2 boot + up to 8× E1.S NVMe" },
-          { label: "Management", value: "iDRAC 10 / OpenBMC · AST2600" },
-          { label: "Rails", value: "Static rails · IR9048 ORv3" },
-        ],
-        color: COMPONENT_COLORS.compute,
-      });
-      u += 1;
-    }
+  // --- CT1–CT8 (bottom compute bank; top-down this is CT8…CT1) ---
+  for (let n = 1; n <= 8; n++) {
+    parts.push(makeCompute(n, u, "ct-low"));
+    u += 1;
+  }
 
-    const s = switchIdx++;
-    parts.push({
-      id: `switch-${s}`,
-      kind: "switch",
-      label: `NVLink Switch Tray ${s}`,
-      shortLabel: `NVSW-${s}`,
-      uStart: u,
-      uHeight: 1,
-      description:
-        "In-rack NVIDIA NVLink 5th-gen switch tray (2 NVSwitch ASICs) inside the Dell IRSS rack. Completes the non-blocking all-to-all fabric for all 72 GPUs in this PowerEdge XE9712 SU.",
-      specs: [
-        { label: "NVSwitch ASICs", value: "2 per tray" },
-        { label: "Generation", value: "NVLink 5th gen" },
-        { label: "Domain", value: "Single-rack L1 (no inter-rack NVLink)" },
-        { label: "Rack aggregate", value: "130 TB/s NVLink" },
-        { label: "Host sleds", value: "PowerEdge XE9712 × 18" },
-      ],
-      color: COMPONENT_COLORS.switch,
-    });
+  // --- NVS1–NVS9 (middle fabric; top-down NVS9…NVS1) ---
+  for (let n = 1; n <= 9; n++) {
+    parts.push(makeNvs(n, u));
+    u += 1;
+  }
+
+  // --- CT9–CT18 (upper compute bank; top-down CT18…CT9) ---
+  for (let n = 9; n <= 18; n++) {
+    parts.push(makeCompute(n, u, "ct-high"));
     u += 1;
   }
 
   parts.push({
     id: "mgmt",
     kind: "management",
+    zone: "mgmt",
     label: "Dell / PowerSwitch OOB Management",
     shortLabel: "OOB",
     uStart: u,
     uHeight: 2,
     description:
-      "Out-of-band plane for the Integrated Rack: Dell PowerSwitch SN2201-class OOB switches, iDRAC/OpenBMC paths, BMC RJ45, and OpenManage Enterprise inventory/control for XE9712 sleds and rack infrastructure.",
+      "Above CT18: PowerSwitch SN2201-class OOB, iDRAC/OpenBMC paths, OpenManage Enterprise inventory for CT1–CT18 and PS33 infrastructure.",
     specs: [
       { label: "OOB switches", value: "PowerSwitch SN2201 class (×2)" },
       { label: "Node BMC", value: "iDRAC 10 / OpenBMC" },
       { label: "Fleet tools", value: "OpenManage Enterprise" },
-      { label: "HPM path", value: "BMC ↔ NVIDIA HMC" },
-      { label: "Support", value: "ProSupport / ProSupport Plus" },
+      { label: "Position", value: "Above CT18" },
     ],
     color: COMPONENT_COLORS.management,
   });
@@ -173,15 +204,16 @@ function buildLayout(): RackPart[] {
   parts.push({
     id: "manifold-upper",
     kind: "manifold",
+    zone: "service",
     label: "Upper Cable / Service Zone",
     shortLabel: "Service",
     uStart: u,
     uHeight: Math.max(1, 48 - u + 1),
     description:
-      "IR9048 upper service zone for fiber/copper scale-out cabling, sensor harnesses, and secondary DLC routing depending on Dell Integrated Rack kit and facility design.",
+      "Top of IR9048: scale-out fiber/copper, sensor harnesses, secondary DLC routing.",
     specs: [
       { label: "Rack", value: "IR9048 · 48U ORv3" },
-      { label: "Zone", value: "Cabling & service access" },
+      { label: "Below", value: "CT18–CT9 · NVS9–1 · CT8–1" },
     ],
     color: COMPONENT_COLORS.manifold,
   });
@@ -191,14 +223,22 @@ function buildLayout(): RackPart[] {
 
 export const RACK_PARTS = buildLayout();
 
+/** Top → bottom elevation string for UI chrome. */
+export const ELEVATION_TOP_DOWN = [
+  { id: "ct-high", label: "CT18 – CT9", detail: "10 × PowerEdge XE9712", kind: "compute" as const },
+  { id: "nvs", label: "NVS9 – NVS1", detail: "9 × NVLink switch trays", kind: "switch" as const },
+  { id: "ct-low", label: "CT8 – CT1", detail: "8 × PowerEdge XE9712", kind: "compute" as const },
+  { id: "power", label: "PS33 × 8", detail: "Power shelves + busbar", kind: "power" as const },
+];
+
 export function getPart(id: string | null): RackPart | undefined {
   if (!id) return undefined;
   return RACK_PARTS.find((p) => p.id === id);
 }
 
 export const KIND_LEGEND: { kind: ComponentKind; label: string; count: string }[] = [
-  { kind: "compute", label: "XE9712 sleds", count: "18 × 1U" },
-  { kind: "switch", label: "NVLink switch", count: "9 × 1U" },
+  { kind: "compute", label: "CT trays", count: "CT1–18" },
+  { kind: "switch", label: "NVS trays", count: "NVS1–9" },
   { kind: "power", label: "PS33 shelves", count: "8 × 33 kW" },
   { kind: "manifold", label: "DLC / service", count: "Manifolds" },
   { kind: "management", label: "OOB / iDRAC", count: "SN2201" },
