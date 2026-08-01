@@ -25,18 +25,19 @@ Deployed via GitHub Actions → GitHub Pages (`npm run build:pages`).
 
 | Part | Role |
 | --- | --- |
-| **CC0 – CC3** | NVLink **cable cartridges** — CT/NVS nodes **blind-mate** into these |
-| CC0 | CT1–5 + NVS path A |
-| CC1 | CT6–9 + NVS path B |
-| CC2 | CT10–14 + NVS path C |
-| CC3 | CT15–18 + NVS path D |
+| **CC0 – CC3** | NVLink **cable cartridges** — **all** CT + **all** NVS mate into every cartridge |
+| CC0 | **GPU 1** lanes (every CT) |
+| CC1 | **GPU 0** lanes (every CT) |
+| CC2 | **GPU 3** lanes (every CT) |
+| CC3 | **GPU 2** lanes (every CT) |
 
 ### Field failures called out in the guide
 
 - **Bent / damaged pins** on cartridge mate face after sled service  
-- **Elevated BER / CRC / replay** on NVLink lanes through one cartridge path  
+- **Elevated BER / CRC / replay** on that **GPU index** across the SU (not a CT range)  
 
 Use the **Rear** camera toggle in the UI to inspect CC0–CC3.
+
 
 ## Run locally
 

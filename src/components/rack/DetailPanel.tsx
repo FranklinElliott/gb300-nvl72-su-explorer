@@ -88,10 +88,15 @@ export function DetailPanel({ selectedId, onClose, onOpenGuide }: DetailPanelPro
         </div>
 
         <p className="text-sm leading-relaxed text-muted">
-          Nodes blind-mate into <span className="font-medium text-fg">four rear cable cartridges</span>
-          . Use <span className="font-medium text-fg">Rear</span> view to inspect CC0–CC3. Field
-          issues: bent pins on mate and elevated NVLink BER/CRC on a cartridge path.
+          Every CT and NVS mates into <span className="font-medium text-fg">all four</span> rear
+          cartridges (<span className="font-medium text-fg">CC0–CC3</span>). Each CC is a GPU lane:{" "}
+          <span className="font-mono text-[11px] text-fg">
+            CC0→GPU1 · CC1→GPU0 · CC2→GPU3 · CC3→GPU2
+          </span>
+          . Use <span className="font-medium text-fg">Rear</span> view. Bent pins / BER hit that GPU
+          index across the SU.
         </p>
+
       </div>
     );
   }
@@ -135,10 +140,11 @@ export function DetailPanel({ selectedId, onClose, onOpenGuide }: DetailPanelPro
       {part.kind === "cartridge" && (
         <div className="mt-3 rounded-lg border border-danger/30 bg-danger/10 px-3 py-2 text-xs leading-relaxed text-fg">
           <span className="font-medium text-danger">Field watch: </span>
-          Bent/recessed pins after sled service, incomplete mate, and elevated BER/CRC on NVLink
-          lanes that traverse this cartridge.
+          {part.matesTo}. Bent pins or BER here hit that GPU index on{" "}
+          <span className="font-semibold">every</span> CT/NVS — not a single CT group.
         </div>
       )}
+
 
       <div className="mt-4 space-y-2">
         <h3 className="font-mono text-[11px] uppercase tracking-wider text-subtle">Specs</h3>

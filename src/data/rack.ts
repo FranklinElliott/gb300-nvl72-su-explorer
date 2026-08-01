@@ -31,15 +31,19 @@ export type RackPart = {
   description: string;
   specs: { label: string; value: string }[];
   color: string;
-  /** For rear cartridges: which CT range mates to this cartridge. */
+  /** For rear cartridges: GPU lane / mate path summary. */
   matesTo?: string;
+
 };
 
 /**
  * Dell IR9048 elevation (bottom → top, front):
  *   PS33×4 bottom → CT1–8 → NVS1–9 → CT9–18 → PS33×4 top → OOB
  *
- * Rear: 4 NVLink cable cartridges (CC0–CC3) that CT/NVS nodes blind-mate into.
+ * Rear: 4 NVLink cable cartridges (CC0–CC3). Every CT and NVS mates into all four;
+ * each cartridge carries one GPU index lane across the SU:
+ *   CC0→GPU1, CC1→GPU0, CC2→GPU3, CC3→GPU2.
+
  * Facility cooling (CDU plant) is outside the data hall — FacOps, not this SU model.
  */
 export const RACK_SPECS = {
@@ -58,7 +62,8 @@ export const RACK_SPECS = {
   cableCartridges: 4,
   powerLayout: "4 PS33 bottom · 4 PS33 top",
   stackOrder: "PS33 top · CT18–9 · NVS9–1 · CT8–1 · PS33 bottom",
-  rear: "4× NVLink cable cartridges (CC0–CC3)",
+  rear: "4× NVLink cable cartridges CC0–CC3 · all CT/NVS · by GPU index",
+
   cooling: "In-rack DLC manifolds/QDCs · facility plant is FacOps (outside hall)",
   nvlinkBandwidth: "130 TB/s aggregate NVLink",
   gpuMemory: "288 GB HBM3e × 72 (~20 TB)",
@@ -79,29 +84,42 @@ export const COMPONENT_COLORS: Record<ComponentKind, string> = {
   frame: "#4b5563",
 };
 
-/** Node groups that blind-mate into each rear cable cartridge. */
+/**
+ * Rear cable cartridges: each connects to **all** CT and NVS trays.
+ * Mapping is by GPU index on every compute tray (not by CT range).
+ *   CC0 ↔ GPU 1 · CC1 ↔ GPU 0 · CC2 ↔ GPU 3 · CC3 ↔ GPU 2
+ */
 export const CARTRIDGE_MAP = [
   {
     n: 0,
-    matesTo: "CT1–CT5 + NVS path A",
-    detail: "Lower-left CT group and associated NVLink lanes into NVS fabric",
+    gpu: 1,
+    matesTo: "GPU 1 · all CT1–18 + all NVS1–9",
+    detail: "NVLink lanes for GPU1 on every CT through the full NVS fabric",
   },
   {
     n: 1,
-    matesTo: "CT6–CT9 + NVS path B",
-    detail: "Lower/mid CT group and NVLink lanes into NVS fabric",
+    gpu: 0,
+    matesTo: "GPU 0 · all CT1–18 + all NVS1–9",
+    detail: "NVLink lanes for GPU0 on every CT through the full NVS fabric",
   },
   {
     n: 2,
-    matesTo: "CT10–CT14 + NVS path C",
-    detail: "Upper-mid CT group and NVLink lanes into NVS fabric",
+    gpu: 3,
+    matesTo: "GPU 3 · all CT1–18 + all NVS1–9",
+    detail: "NVLink lanes for GPU3 on every CT through the full NVS fabric",
   },
   {
     n: 3,
-    matesTo: "CT15–CT18 + NVS path D",
-    detail: "Upper CT group and NVLink lanes into NVS fabric",
+    gpu: 2,
+    matesTo: "GPU 2 · all CT1–18 + all NVS1–9",
+    detail: "NVLink lanes for GPU2 on every CT through the full NVS fabric",
   },
 ] as const;
+
+/** Compact legend string for UI / CT specs. */
+export const CARTRIDGE_GPU_LEGEND =
+  "CC0→GPU1 · CC1→GPU0 · CC2→GPU3 · CC3→GPU2 (all CT + NVS)";
+
 
 function makePower(n: number, u: number, bank: "bottom" | "top"): RackPart {
   const zone = bank === "bottom" ? "power-bottom" : "power-top";
@@ -130,8 +148,6 @@ function makePower(n: number, u: number, bank: "bottom" | "top"): RackPart {
 function makeCompute(n: number, u: number, zone: RackZone): RackPart {
   const bank =
     zone === "ct-low" ? "Lower bank (CT1–CT8)" : "Upper bank (CT9–CT18)";
-  const cartridge =
-    n <= 5 ? "CC0" : n <= 9 ? "CC1" : n <= 14 ? "CC2" : "CC3";
 
   return {
     id: `ct-${n}`,
@@ -142,23 +158,23 @@ function makeCompute(n: number, u: number, zone: RackZone): RackPart {
     shortLabel: `CT${n}`,
     uStart: u,
     uHeight: 1,
-    description: `Dell PowerEdge XE9712 CT${n} (${bank}). Blind-mates NVLink into rear cable cartridge ${cartridge}. East/west ConnectX-8 RoCE ports typically uplink over AEC to Dell PowerSwitch SN5610 leaf SWPs (isolate NIC vs AEC vs SWP on down/BER/flaps).`,
-
+    description: `Dell PowerEdge XE9712 CT${n} (${bank}). Blind-mates into all four rear cable cartridges (CC0–CC3): GPU0→CC1, GPU1→CC0, GPU2→CC3, GPU3→CC2. East/west ConnectX-8 RoCE uplinks over AEC to Dell PowerSwitch SN5610 (isolate NIC vs AEC vs SWP on down/BER/flaps).`,
     specs: [
       { label: "Tray ID", value: `CT${n}` },
       { label: "Bank", value: bank },
-      { label: "Rear cartridge", value: cartridge },
       { label: "GPUs", value: "4 × B300 · 288 GB HBM3e ea." },
+      { label: "NVLink cart.", value: "All CC0–CC3 (by GPU)" },
+      { label: "GPU→CC map", value: "G0→CC1 · G1→CC0 · G2→CC3 · G3→CC2" },
       { label: "CPUs", value: "2 × Grace" },
       { label: "East/West", value: "4× OSFP · ConnectX-8 RoCE → SN5610" },
-
       { label: "North/South", value: "1× BlueField-3" },
       { label: "Cooling", value: "In-rack DLC · facility plant (FacOps)" },
     ],
     color: COMPONENT_COLORS.compute,
-    matesTo: cartridge,
+    matesTo: CARTRIDGE_GPU_LEGEND,
   };
 }
+
 
 function makeNvs(n: number, u: number): RackPart {
   return {
@@ -170,17 +186,20 @@ function makeNvs(n: number, u: number): RackPart {
     shortLabel: `NVS${n}`,
     uStart: u,
     uHeight: 1,
-    description: `NVLink switch tray NVS${n}. Connects through the four rear cable cartridges (CC0–CC3) to all CT nodes. Cartridge pin damage or elevated BER shows up as NVLink CRC/replay on paths through this switch.`,
+    description: `NVLink switch tray NVS${n}. Mates into all four rear cable cartridges (CC0–CC3) with every CT. Each cartridge carries one GPU-index lane (CC0=GPU1, CC1=GPU0, CC2=GPU3, CC3=GPU2). Bent pins or BER on a cartridge degrade that GPU lane across the SU.`,
     specs: [
       { label: "Tray ID", value: `NVS${n}` },
       { label: "Bank", value: "Middle fabric (NVS1–NVS9)" },
-      { label: "Rear path", value: "CC0–CC3 cable cartridges" },
+      { label: "Rear path", value: "All CC0–CC3 (with every CT)" },
+      { label: "Lane map", value: CARTRIDGE_GPU_LEGEND },
       { label: "NVSwitch ASICs", value: "2 per tray" },
       { label: "Rack aggregate", value: "130 TB/s NVLink" },
     ],
     color: COMPONENT_COLORS.switch,
+    matesTo: CARTRIDGE_GPU_LEGEND,
   };
 }
+
 
 function makeCartridge(n: number): RackPart {
   const map = CARTRIDGE_MAP.find((c) => c.n === n)!;
@@ -189,24 +208,27 @@ function makeCartridge(n: number): RackPart {
     kind: "cartridge",
     zone: "rear-cartridge",
     placement: "rear",
-    label: `CC${n} · Rear Cable Cartridge`,
+    label: `CC${n} · Rear Cable Cartridge (GPU ${map.gpu})`,
     shortLabel: `CC${n}`,
     uStart: 0,
     uHeight: 0,
     matesTo: map.matesTo,
-    description: `Rear NVLink cable cartridge CC${n}. CT and NVS trays blind-mate into high-density connectors on this cartridge at the back of the IR9048. Common field failures: bent/pushed pins on mate, incomplete seating after sled service, and elevated BER / CRC on NVLink lanes that traverse this cartridge.`,
+    description: `Rear NVLink cable cartridge CC${n} carries GPU ${map.gpu} lanes for every CT (CT1–18) and mates with every NVS (NVS1–9). Not a per-CT subset — all trays hit all four cartridges; this one is the GPU ${map.gpu} path. Field failures: bent/pushed pins, incomplete mate after sled service, elevated BER/CRC on GPU ${map.gpu} links across the SU.`,
     specs: [
       { label: "Cartridge", value: `CC${n} (0–3)` },
+      { label: "GPU index", value: `GPU ${map.gpu}` },
+      { label: "Connects", value: "All CT1–18 + all NVS1–9" },
+      { label: "Lane map", value: CARTRIDGE_GPU_LEGEND },
       { label: "Location", value: "Rear of IR9048 (behind CT/NVS)" },
-      { label: "Mates to", value: map.matesTo },
-      { label: "Role", value: "NVLink copper path · node ↔ NVS fabric" },
+      { label: "Role", value: `NVLink copper · GPU ${map.gpu} domain` },
       { label: "Failure modes", value: "Bent pins · incomplete mate · high BER" },
-      { label: "Telemetry", value: "NVLink CRC / replay / BER counters" },
+      { label: "Telemetry", value: `NVLink CRC / replay / BER on GPU ${map.gpu}` },
       { label: "Service", value: "Inspect pins · reseat · FRU replace" },
     ],
     color: COMPONENT_COLORS.cartridge,
   };
 }
+
 
 function buildLayout(): RackPart[] {
   const parts: RackPart[] = [];
@@ -333,7 +355,8 @@ export const ELEVATION_TOP_DOWN = [
   {
     id: "cartridges",
     label: "CC0 – CC3 (rear)",
-    detail: "Cable cartridges · nodes blind-mate",
+    detail: "All CT/NVS · by GPU index",
+
     kind: "cartridge" as const,
   },
 ];

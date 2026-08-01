@@ -166,7 +166,10 @@ function Home() {
               <Info className="size-3" />
               Rear cartridges
             </div>
-            <span className="text-fg">CC0–CC3</span> carry NVLink copper from CT/NVS blind-mates.
+            <span className="text-fg">CC0–CC3</span> mate to{" "}
+            <span className="text-fg">all CT + NVS</span> by GPU index (CC0→GPU1, CC1→GPU0,
+            CC2→GPU3, CC3→GPU2). Bent pins and high BER hit that GPU lane across the SU.
+
             Watch for <span className="text-fg">bent pins</span> and elevated{" "}
             <span className="text-fg">BER/CRC</span> after sled service.
           </div>

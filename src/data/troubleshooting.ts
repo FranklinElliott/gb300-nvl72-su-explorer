@@ -332,16 +332,18 @@ export const TROUBLESHOOTING_GUIDE: GuideSection[] = [
     ],
     checks: [
       "NVIDIA: per-link state via NVSM / HMC / fabric manager logs",
-      "Map errors to NVS tray vs CT vs rear cartridge (CC0–CC3)",
+      "Map errors to NVS tray vs CT vs rear cartridge (CC0–CC3 by GPU index)",
       "Dell: tray seating, latches, rear CC mate depth",
+      "GPU-lane affinity: CC0=GPU1, CC1=GPU0, CC2=GPU3, CC3=GPU2 on every CT",
       "Firmware alignment: switch tray + GPU + HMC (Dell bundle preferred)",
     ],
     actions: [
       "Collect NVIDIA dumps before clearing sticky errors",
       "Reseat/replace implicated NVS tray (Dell FRU)",
-      "If errors group by CC affinity → cartridge procedure",
+      "If errors group by GPU index → matching cartridge (CC) procedure",
       "If errors follow one GPU package → CT FRU / NVIDIA GPU RMA path via Dell",
     ],
+
     relatedKinds: ["switch", "compute", "cartridge"],
     tags: ["NVLink", "NVS", "CRC", "replay", "NCCL", "NVSM", "HMC"],
     sources: [
@@ -356,19 +358,20 @@ export const TROUBLESHOOTING_GUIDE: GuideSection[] = [
     severity: "critical",
     vendor: "dell",
     summary:
-      "CT/NVS blind-mate into four rear NVLink cable cartridges. Bent pins after sled service are a top field failure.",
+      "Every CT and NVS mates into all four rear cartridges. Each CC is a GPU-index lane: CC0=GPU1, CC1=GPU0, CC2=GPU3, CC3=GPU2. Bent pins after sled service are a top field failure.",
     symptoms: [
       "NVLink fails to train after CT/NVS insert/remove",
-      "Visible bent, recessed, or contaminated pins on CC face",
-      "One cartridge path down; peers healthy",
+      "Visible bent, recessed, or contaminated pins on CC mate face",
+      "One GPU index bad on many CTs (same CC) while other GPU indices healthy",
       "Hard stop / crunch before full mate",
     ],
     checks: [
       "Power down and isolate before inspecting pin field",
       "Light + magnification only — no metal tools on pins",
-      "Affinity: CC0≈CT1–5, CC1≈CT6–9, CC2≈CT10–14, CC3≈CT15–18",
+      "Affinity by GPU index (not CT range): CC0↔GPU1, CC1↔GPU0, CC2↔GPU3, CC3↔GPU2 — on all CT1–18 + all NVS",
       "Guide pins, debris, cage latch, and node-side connector",
     ],
+
     actions: [
       "Stop if resistance is abnormal — never force home",
       "FRU-replace cable cartridge per Dell (preferred over field pin-straighten)",
@@ -377,7 +380,8 @@ export const TROUBLESHOOTING_GUIDE: GuideSection[] = [
       "ProSupport: Service Tag + CC# + pin-field photos",
     ],
     relatedKinds: ["cartridge", "compute", "switch"],
-    tags: ["bent pins", "CC0", "CC1", "CC2", "CC3", "mate", "FRU"],
+    tags: ["bent pins", "CC0", "CC1", "CC2", "CC3", "GPU0", "GPU1", "GPU2", "GPU3", "mate", "FRU"],
+
     sources: ["Dell rear cable cartridge service / pin inspection"],
   },
   {
@@ -387,19 +391,20 @@ export const TROUBLESHOOTING_GUIDE: GuideSection[] = [
     severity: "major",
     vendor: "both",
     summary:
-      "Marginal mates often pass idle and fail under load. Use NVIDIA counters + Dell physical reseat path.",
+      "Marginal mates often pass idle and fail under load. BER on one GPU index across many CTs points at that CC (CC0=GPU1 … CC3=GPU2), not a single CT range.",
     symptoms: [
-      "Rising NVLink CRC, replay, or BER on a CT subset",
+      "Rising NVLink CRC, replay, or BER on the same GPU index on multiple CTs",
       "Intermittent collective hangs under traffic",
-      "Errors cluster by CC affinity",
+      "Errors cluster by cartridge / GPU lane (all trays use all CCs)",
       "More retrains after thermal or vibration events",
     ],
     checks: [
-      "NVIDIA: dump per-link BER/CRC/replay; group by CC",
+      "NVIDIA: dump per-link BER/CRC/replay; group by GPU index → CC (CC0=G1, CC1=G0, CC2=G3, CC3=G2)",
       "Idle vs loaded BER (marginal mates fail under traffic)",
-      "Dell: reseat CT trays on that CC; check latch depth",
-      "Rule out single ASIC (errors stick to one chip, not a CC group)",
+      "Dell: reseat CT/NVS on the suspect CC path; check latch depth",
+      "Rule out single GPU package (errors stick to one chip on one CT, not same GPU index fleet-wide)",
     ],
+
     actions: [
       "Reseat CT + rear cartridge (Dell physical)",
       "Clean per Dell ESD procedure — no abrasives on pin fields",
@@ -408,7 +413,8 @@ export const TROUBLESHOOTING_GUIDE: GuideSection[] = [
       "Keep SU out of production jobs until baseline BER restored",
     ],
     relatedKinds: ["cartridge", "compute", "switch"],
-    tags: ["BER", "CRC", "signal integrity", "NVLink", "load test"],
+    tags: ["BER", "CRC", "signal integrity", "NVLink", "load test", "GPU lane", "CC0", "CC1", "CC2", "CC3"],
+
     sources: [
       "NVIDIA link error / BER counter guidance",
       "Dell cable cartridge reseat / replace",

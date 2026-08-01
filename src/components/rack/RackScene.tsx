@@ -188,7 +188,8 @@ function TrayMesh({
             {part.uStart > 0
               ? ` · U${part.uStart}${part.uHeight > 1 ? `–${part.uStart + part.uHeight - 1}` : ""}`
               : ""}
-            {part.matesTo && part.kind === "compute" ? ` · ${part.matesTo}` : ""}
+            {part.matesTo && part.kind === "compute" ? " · CC0–3 (by GPU)" : ""}
+
           </div>
         </Html>
       )}
