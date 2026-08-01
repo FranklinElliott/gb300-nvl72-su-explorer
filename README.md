@@ -2,6 +2,14 @@
 
 Interactive 3D schematic of a **Dell IR9048** Integrated Rack SU.
 
+## Live site
+
+**[https://franklinelliott.github.io/gb300-nvl72-su-explorer/](https://franklinelliott.github.io/gb300-nvl72-su-explorer/)**
+
+Source: [FranklinElliott/gb300-nvl72-su-explorer](https://github.com/FranklinElliott/gb300-nvl72-su-explorer)
+
+Deployed via GitHub Actions → GitHub Pages (`npm run build:pages`).
+
 ## Front elevation (top → bottom)
 
 | Zone | Contents |
@@ -30,12 +38,13 @@ Interactive 3D schematic of a **Dell IR9048** Integrated Rack SU.
 
 Use the **Rear** camera toggle in the UI to inspect CC1–CC4.
 
-## Run
+## Run locally
 
 ```bash
 npm install
 npm run dev
-npm run build
+npm run build          # Vercel-oriented production build
+npm run build:pages    # Static build for GitHub Pages
 ```
 
 Educational only — follow Dell ProSupport on production systems.

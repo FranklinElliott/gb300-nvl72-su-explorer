@@ -15,3 +15,5 @@ routeTree.gen.ts
 src/routeTree.gen.ts
 .grok/
 .node_modules.lock
+dist-pages
+.output
