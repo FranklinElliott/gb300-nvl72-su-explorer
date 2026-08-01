@@ -1,19 +1,27 @@
-import { useMemo, useRef, useState } from "react";
-import { Canvas, useFrame } from "@react-three/fiber";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { Html, OrbitControls } from "@react-three/drei";
 import * as THREE from "three";
-import { IN_RACK_PARTS, EXTERNAL_PARTS, type RackPart } from "@/data/rack";
+import {
+  IN_RACK_PARTS,
+  EXTERNAL_PARTS,
+  REAR_PARTS,
+  type RackPart,
+} from "@/data/rack";
 
 const U_HEIGHT = 0.05;
 const RACK_W = 0.78;
 const RACK_D = 1.05;
 const RACK_INNER_H = 48 * U_HEIGHT;
 
+export type ViewMode = "front" | "rear";
+
 type RackSceneProps = {
   selectedId: string | null;
   highlightKind: string | null;
   explode: boolean;
   autoRotate: boolean;
+  viewMode: ViewMode;
   onSelect: (id: string | null) => void;
 };
 
@@ -28,6 +36,7 @@ function partY(part: RackPart, explode: boolean) {
     switch: 0.28,
     management: 0.42,
     cdu: 0,
+    cartridge: 0.1,
     frame: 0,
   };
   return centered + (kindBias[part.kind] ?? 0);
@@ -42,6 +51,7 @@ function partX(part: RackPart, explode: boolean) {
     switch: -0.55,
     management: 0.35,
     cdu: -1.2,
+    cartridge: 0,
     frame: 0,
   };
   return kindBias[part.kind] ?? 0;
@@ -180,7 +190,8 @@ function TrayMesh({
             {part.shortLabel}
             {part.uStart > 0
               ? ` · U${part.uStart}${part.uHeight > 1 ? `–${part.uStart + part.uHeight - 1}` : ""}`
-              : " · external"}
+              : ""}
+            {part.matesTo && part.kind === "compute" ? ` · ${part.matesTo}` : ""}
           </div>
         </Html>
       )}
@@ -231,7 +242,170 @@ function RackFrame() {
   );
 }
 
-/** External CDU sidecar + flexible hoses into the rack. */
+/** Four rear NVLink cable cartridges — nodes blind-mate into these. */
+function RearCableCartridges({
+  selectedId,
+  highlightKind,
+  explode,
+  onSelect,
+}: {
+  selectedId: string | null;
+  highlightKind: string | null;
+  explode: boolean;
+  onSelect: (id: string) => void;
+}) {
+  const cartridges = useMemo(() => REAR_PARTS.filter((p) => p.kind === "cartridge"), []);
+  const zBase = explode ? -RACK_D / 2 - 0.55 : -RACK_D / 2 - 0.12;
+  // Height covers CT+NVS region roughly mid rack
+  const cartH = RACK_INNER_H * 0.62;
+  const cartW = RACK_W * 0.2;
+  const cartD = 0.14;
+
+  return (
+    <group position={[0, 0.05, zBase]}>
+      {/* Rear cage rail */}
+      <mesh position={[0, 0, -0.02]}>
+        <boxGeometry args={[RACK_W * 0.95, cartH + 0.12, 0.04]} />
+        <meshStandardMaterial color="#1f2937" metalness={0.5} roughness={0.45} />
+      </mesh>
+
+      {cartridges.map((part, i) => {
+        const selected = selectedId === part.id;
+        const dimmed =
+          (highlightKind !== null && part.kind !== highlightKind) ||
+          (selectedId !== null && !selected && highlightKind === null);
+        const x = -RACK_W * 0.36 + i * (RACK_W * 0.24);
+        return (
+          <CartridgeMesh
+            key={part.id}
+            part={part}
+            position={[x, 0, explode ? -0.08 * i : 0]}
+            size={[cartW, cartH, cartD]}
+            selected={selected}
+            dimmed={dimmed}
+            onSelect={onSelect}
+          />
+        );
+      })}
+    </group>
+  );
+}
+
+function CartridgeMesh({
+  part,
+  position,
+  size,
+  selected,
+  dimmed,
+  onSelect,
+}: {
+  part: RackPart;
+  position: [number, number, number];
+  size: [number, number, number];
+  selected: boolean;
+  dimmed: boolean;
+  onSelect: (id: string) => void;
+}) {
+  const matRef = useRef<THREE.MeshStandardMaterial>(null);
+  const [hovered, setHovered] = useState(false);
+  const [w, h, d] = size;
+
+  useFrame(() => {
+    if (!matRef.current) return;
+    const target = selected || hovered ? 0.95 : dimmed ? 0.05 : 0.4;
+    matRef.current.emissiveIntensity = THREE.MathUtils.lerp(
+      matRef.current.emissiveIntensity,
+      target,
+      0.15,
+    );
+  });
+
+  return (
+    <group position={position}>
+      <mesh
+        onClick={(e) => {
+          e.stopPropagation();
+          onSelect(part.id);
+        }}
+        onPointerOver={(e) => {
+          e.stopPropagation();
+          setHovered(true);
+          document.body.style.cursor = "pointer";
+        }}
+        onPointerOut={() => {
+          setHovered(false);
+          document.body.style.cursor = "default";
+        }}
+      >
+        <boxGeometry args={[w, h, d]} />
+        <meshStandardMaterial
+          ref={matRef}
+          color="#9f1239"
+          metalness={0.35}
+          roughness={0.4}
+          emissive="#e11d48"
+          emissiveIntensity={0.4}
+          transparent={dimmed}
+          opacity={dimmed ? 0.14 : 1}
+        />
+      </mesh>
+
+      {/* Pin field face (toward nodes / +Z into rack) */}
+      {!dimmed && (
+        <group position={[0, 0, d / 2 + 0.008]}>
+          <mesh>
+            <boxGeometry args={[w * 0.85, h * 0.92, 0.012]} />
+            <meshStandardMaterial color="#0c0a09" metalness={0.4} roughness={0.55} />
+          </mesh>
+          {/* Pin grid suggestion */}
+          {Array.from({ length: 8 }).map((_, row) =>
+            Array.from({ length: 3 }).map((_, col) => (
+              <mesh
+                key={`${row}-${col}`}
+                position={[
+                  -w * 0.28 + col * w * 0.28,
+                  -h * 0.38 + row * (h * 0.11),
+                  0.01,
+                ]}
+              >
+                <boxGeometry args={[0.018, 0.018, 0.01]} />
+                <meshStandardMaterial
+                  color={selected || hovered ? "#fda4af" : "#78716c"}
+                  emissive={selected || hovered ? "#e11d48" : "#44403c"}
+                  emissiveIntensity={selected ? 0.8 : 0.2}
+                />
+              </mesh>
+            )),
+          )}
+        </group>
+      )}
+
+      {/* Latch handle */}
+      {!dimmed && (
+        <mesh position={[0, h / 2 - 0.04, -d / 2 - 0.02]}>
+          <boxGeometry args={[w * 0.5, 0.03, 0.04]} />
+          <meshStandardMaterial color="#e7e5e4" metalness={0.6} roughness={0.3} />
+        </mesh>
+      )}
+
+      {(selected || hovered) && (
+        <Html
+          position={[0, h / 2 + 0.1, 0]}
+          center
+          style={{ pointerEvents: "none" }}
+          distanceFactor={5}
+        >
+          <div className="max-w-[160px] rounded-md border border-border bg-surface/95 px-2 py-1 font-mono text-[10px] text-fg shadow-lg">
+            <div className="font-semibold">{part.shortLabel}</div>
+            <div className="text-muted">{part.matesTo}</div>
+            <div className="text-danger/90">Bent pins · BER risk</div>
+          </div>
+        </Html>
+      )}
+    </group>
+  );
+}
+
 function ExternalCdu({
   selected,
   dimmed,
@@ -267,7 +441,6 @@ function ExternalCdu({
 
   return (
     <group position={[x, -0.15, 0.1]}>
-      {/* CDU chassis */}
       <mesh
         onClick={(e) => {
           e.stopPropagation();
@@ -295,8 +468,6 @@ function ExternalCdu({
           opacity={dimmed ? 0.15 : 1}
         />
       </mesh>
-
-      {/* Pump modules */}
       {!dimmed &&
         [-0.18, 0.18].map((oy, i) => (
           <mesh key={i} position={[0, oy, d / 2 + 0.02]}>
@@ -305,13 +476,9 @@ function ExternalCdu({
               color="#5eead4"
               emissive="#2dd4bf"
               emissiveIntensity={0.7}
-              metalness={0.3}
-              roughness={0.35}
             />
           </mesh>
         ))}
-
-      {/* Supply / return hoses into rack */}
       {!dimmed &&
         [0.12, -0.12].map((oz, i) => (
           <mesh
@@ -329,20 +496,13 @@ function ExternalCdu({
             />
           </mesh>
         ))}
-
       {(selected || hovered) && (
         <Html position={[0, h / 2 + 0.12, 0]} center style={{ pointerEvents: "none" }} distanceFactor={6}>
           <div className="whitespace-nowrap rounded-md border border-border bg-surface/95 px-2 py-1 font-mono text-[10px] text-fg shadow-lg">
-            External CDU · not in rack
+            External CDU
           </div>
         </Html>
       )}
-
-      {/* Floor plate label */}
-      <mesh position={[0, -h / 2 - 0.02, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-        <circleGeometry args={[0.42, 24]} />
-        <meshStandardMaterial color="#0d9488" metalness={0.2} roughness={0.8} transparent opacity={0.35} />
-      </mesh>
     </group>
   );
 }
@@ -364,11 +524,22 @@ function InRackManifoldGlow({ explode }: { explode: boolean }) {
         color="#5eead4"
         emissive="#2ec4b6"
         emissiveIntensity={0.5}
-        metalness={0.15}
-        roughness={0.3}
       />
     </mesh>
   );
+}
+
+function CameraRig({ viewMode }: { viewMode: ViewMode }) {
+  const { camera } = useThree();
+  useEffect(() => {
+    if (viewMode === "rear") {
+      camera.position.set(0.4, 0.35, -3.4);
+    } else {
+      camera.position.set(3.1, 0.55, 3.6);
+    }
+    camera.lookAt(viewMode === "rear" ? 0 : -0.35, 0, viewMode === "rear" ? -0.4 : 0);
+  }, [viewMode, camera]);
+  return null;
 }
 
 function SceneContent({
@@ -376,9 +547,11 @@ function SceneContent({
   highlightKind,
   explode,
   autoRotate,
+  viewMode,
   onSelect,
 }: RackSceneProps) {
   const parts = useMemo(() => IN_RACK_PARTS, []);
+  const target = viewMode === "rear" ? ([0, 0, -0.4] as const) : ([-0.35, 0, 0] as const);
 
   return (
     <>
@@ -386,9 +559,12 @@ function SceneContent({
       <ambientLight intensity={1.05} />
       <hemisphereLight args={["#dbeafe", "#0b0f14", 0.45]} />
       <directionalLight position={[4, 6, 5]} intensity={1.9} />
-      <directionalLight position={[-4, 2, -2]} intensity={0.75} color="#93c5fd" />
+      <directionalLight position={[-3, 3, -4]} intensity={1.1} color="#fecdd3" />
       <pointLight position={[2, 1, 3]} intensity={1.0} color="#60a5fa" />
       <pointLight position={[-1.4, 0, 1]} intensity={0.55} color="#2dd4bf" />
+      <pointLight position={[0, 0.5, -2.2]} intensity={0.9} color="#fb7185" />
+
+      <CameraRig viewMode={viewMode} />
 
       <group>
         <RackFrame />
@@ -409,6 +585,12 @@ function SceneContent({
             />
           );
         })}
+        <RearCableCartridges
+          selectedId={selectedId}
+          highlightKind={highlightKind}
+          explode={explode}
+          onSelect={onSelect}
+        />
         <ExternalCdu
           selected={selectedId === "cdu-external"}
           dimmed={
@@ -428,11 +610,11 @@ function SceneContent({
       <OrbitControls
         makeDefault
         enablePan
-        autoRotate={autoRotate}
+        autoRotate={autoRotate && viewMode === "front"}
         autoRotateSpeed={0.5}
         minDistance={1.8}
         maxDistance={14}
-        target={[-0.35, 0, 0]}
+        target={[...target]}
         maxPolarAngle={Math.PI * 0.88}
       />
     </>
@@ -459,7 +641,9 @@ export function RackScene(props: RackSceneProps) {
         <SceneContent {...props} />
       </Canvas>
       <div className="pointer-events-none absolute bottom-3 left-3 rounded-md border border-border bg-surface/80 px-2.5 py-1.5 font-mono text-[10px] text-muted backdrop-blur-sm">
-        Drag to orbit · Click CT / NVS / PS33 / external CDU
+        {props.viewMode === "rear"
+          ? "Rear view · CC1–CC4 cable cartridges · bent pins / BER"
+          : "Front view · orbit · click trays · use Rear for CC1–4"}
       </div>
     </div>
   );

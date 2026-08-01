@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
-import { RackScene } from "./RackScene";
+import { RackScene, type ViewMode } from "./RackScene";
 
 type Props = {
   selectedId: string | null;
   highlightKind: string | null;
   explode: boolean;
   autoRotate: boolean;
+  viewMode: ViewMode;
   onSelect: (id: string | null) => void;
 };
 

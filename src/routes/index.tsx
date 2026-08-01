@@ -7,6 +7,7 @@ import {
   RotateCcw,
   SplitSquareVertical,
   Info,
+  ScanFace,
 } from "lucide-react";
 import { ClientRackScene } from "@/components/rack/ClientRackScene";
 import { DetailPanel } from "@/components/rack/DetailPanel";
@@ -16,6 +17,7 @@ import {
   KIND_LEGEND,
   type ComponentKind,
 } from "@/data/rack";
+import type { ViewMode } from "@/components/rack/RackScene";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/")({
@@ -29,6 +31,7 @@ function Home() {
   const [highlightKind, setHighlightKind] = useState<ComponentKind | null>(null);
   const [explode, setExplode] = useState(false);
   const [autoRotate, setAutoRotate] = useState(true);
+  const [viewMode, setViewMode] = useState<ViewMode>("front");
   const [tab, setTab] = useState<Tab>("inspect");
   const [guideKindFilter, setGuideKindFilter] = useState<ComponentKind | null>(null);
 
@@ -51,13 +54,40 @@ function Home() {
                 Dell XE9712 · GB300 NVL72
               </h1>
               <p className="truncate font-mono text-[10px] text-muted md:text-[11px]">
-                PS33×4 top · CT18–9 · NVS9–1 · CT8–1 · PS33×4 bot · ext CDU
+                CT/NVS · CC1–4 rear · PS33 4+4 · ext CDU
               </p>
             </div>
           </div>
         </div>
 
-        <div className="flex items-center gap-1.5 md:gap-2">
+        <div className="flex flex-wrap items-center justify-end gap-1.5 md:gap-2">
+          <div className="flex rounded-lg border border-border bg-surface-2 p-0.5">
+            <button
+              type="button"
+              onClick={() => setViewMode("front")}
+              className={cn(
+                "h-8 rounded-md px-2.5 text-xs font-medium transition-colors",
+                viewMode === "front" ? "bg-surface-3 text-fg" : "text-muted hover:text-fg",
+              )}
+            >
+              Front
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setViewMode("rear");
+                setAutoRotate(false);
+                setHighlightKind("cartridge");
+              }}
+              className={cn(
+                "inline-flex h-8 items-center gap-1 rounded-md px-2.5 text-xs font-medium transition-colors",
+                viewMode === "rear" ? "bg-surface-3 text-fg" : "text-muted hover:text-fg",
+              )}
+            >
+              <ScanFace className="size-3.5" />
+              Rear
+            </button>
+          </div>
           <ControlToggle
             active={explode}
             onClick={() => setExplode((v) => !v)}
@@ -70,7 +100,7 @@ function Home() {
             label="Orbit"
             icon={RotateCcw}
           />
-          <div className="ml-1 flex rounded-lg border border-border bg-surface-2 p-0.5">
+          <div className="flex rounded-lg border border-border bg-surface-2 p-0.5">
             <TabButton
               active={tab === "inspect"}
               onClick={() => setTab("inspect")}
@@ -94,6 +124,7 @@ function Home() {
             highlightKind={highlightKind}
             explode={explode}
             autoRotate={autoRotate}
+            viewMode={viewMode}
             onSelect={(id) => {
               setSelectedId(id);
               if (id) setTab("inspect");
@@ -107,9 +138,10 @@ function Home() {
                 <button
                   key={item.kind}
                   type="button"
-                  onClick={() =>
-                    setHighlightKind((k) => (k === item.kind ? null : item.kind))
-                  }
+                  onClick={() => {
+                    setHighlightKind((k) => (k === item.kind ? null : item.kind));
+                    if (item.kind === "cartridge") setViewMode("rear");
+                  }}
                   className={cn(
                     "pointer-events-auto flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-medium transition-colors",
                     active
@@ -129,14 +161,14 @@ function Home() {
             })}
           </div>
 
-          <div className="pointer-events-none absolute bottom-12 right-3 hidden max-w-[230px] rounded-lg border border-border bg-surface/90 p-2.5 text-[10px] leading-relaxed text-muted backdrop-blur-sm md:block">
+          <div className="pointer-events-none absolute bottom-12 right-3 hidden max-w-[240px] rounded-lg border border-border bg-surface/90 p-2.5 text-[10px] leading-relaxed text-muted backdrop-blur-sm md:block">
             <div className="mb-1 flex items-center gap-1 font-medium text-fg">
               <Info className="size-3" />
-              Layout
+              Rear cartridges
             </div>
-            <span className="text-fg">4 PS33</span> top + <span className="text-fg">4 PS33</span>{" "}
-            bottom. <span className="text-fg">CDU external</span> (sidecar / in-row) with hoses into
-            rack manifolds.
+            <span className="text-fg">CC1–CC4</span> carry NVLink copper from CT/NVS blind-mates.
+            Watch for <span className="text-fg">bent pins</span> and elevated{" "}
+            <span className="text-fg">BER/CRC</span> after sled service.
           </div>
         </section>
 

@@ -9,7 +9,14 @@ export type GuideSection = {
   checks: string[];
   actions: string[];
   relatedKinds: Array<
-    "compute" | "switch" | "power" | "manifold" | "management" | "cdu" | "frame"
+    | "compute"
+    | "switch"
+    | "power"
+    | "manifold"
+    | "management"
+    | "cdu"
+    | "cartridge"
+    | "frame"
   >;
   tags: string[];
 };
@@ -170,16 +177,73 @@ export const TROUBLESHOOTING_GUIDE: GuideSection[] = [
     ],
     checks: [
       "All NVS1–NVS9 trays healthy",
-      "Errors tracking one NVS vs one CT",
-      "Tray seating in middle fabric bank",
+      "Errors tracking one NVS vs one CT vs one rear cartridge (CC1–CC4)",
+      "Tray seating in middle fabric bank and rear cartridge latches",
     ],
     actions: [
       "Reseat/replace implicated NVS tray",
+      "Inspect/replace rear cable cartridge if errors group by CC affinity",
       "Replace CT sled if errors follow a GPU package",
       "Collect dumps before clearing sticky errors",
     ],
-    relatedKinds: ["switch", "compute"],
-    tags: ["NVLink", "NVS", "fabric", "CT"],
+    relatedKinds: ["switch", "compute", "cartridge"],
+    tags: ["NVLink", "NVS", "fabric", "CT", "cable cartridge"],
+  },
+  {
+    id: "cartridge-bent-pins",
+    category: "Fabric",
+    title: "Rear cable cartridge bent / damaged pins (CC1–CC4)",
+    severity: "critical",
+    symptoms: [
+      "CT or NVS fails to train NVLink after sled insert/remove",
+      "Visible bent, recessed, or contaminated pins on CC mate face",
+      "One cartridge path down while peer cartridges are healthy",
+      "Sled reseat “crunch” or hard stop before full mate",
+    ],
+    checks: [
+      "Power down and isolate the affected CT/NVS before inspecting the rear cartridge",
+      "Inspect CC1–CC4 pin fields with light + magnification (no metal tools on pins)",
+      "Map failed NVLink lanes / HMC logs to cartridge (CC1≈CT1–5, CC2≈CT6–9, CC3≈CT10–14, CC4≈CT15–18)",
+      "Check for debris, bent guide pins, or incomplete latch on the cartridge cage",
+      "Confirm the sled midplane connector is not the damaged side",
+    ],
+    actions: [
+      "Do not force a sled home if resistance is abnormal — stop and inspect",
+      "Straighten only if site procedure allows; otherwise FRU-replace the cable cartridge",
+      "Replace CT/NVS connector FRU if damage is on the node side",
+      "After replace: reseat, verify all NVLink links up, clear sticky errors, re-run fabric test",
+      "Open ProSupport with Service Tag + CC# + photos of pin field when possible",
+    ],
+    relatedKinds: ["cartridge", "compute", "switch"],
+    tags: ["bent pins", "CC1", "CC2", "CC3", "CC4", "mate", "NVLink", "FRU"],
+  },
+  {
+    id: "cartridge-ber",
+    category: "Fabric",
+    title: "Elevated BER / CRC on cable cartridge path",
+    severity: "major",
+    symptoms: [
+      "Rising NVLink CRC, replay, or BER counters on a subset of GPUs",
+      "Intermittent collective hangs or ECC/replay storms under load",
+      "Errors cluster on CT group that shares one rear cartridge (CC1–CC4)",
+      "Links retrain more often after thermal or vibration events",
+    ],
+    checks: [
+      "Dump per-link BER/CRC/replay from NVOS / HMC and group by cartridge affinity",
+      "Compare idle vs loaded BER (marginal mates often only fail under traffic)",
+      "Reseat CT trays on the suspect CC path and re-measure",
+      "Inspect cartridge seating depth and latch; look for partial mate",
+      "Rule out NVS ASIC / single-GPU package faults (errors stick to one chip, not a CC group)",
+    ],
+    actions: [
+      "Reseat both ends of the path: CT sled + rear cable cartridge",
+      "Clean connectors per Dell ESD/optical-copper procedure (no abrasives on pin fields)",
+      "Replace the cable cartridge if BER remains above threshold after reseat",
+      "Replace CT or NVS if BER follows the node after cartridge swap",
+      "Keep SU out of production fabric jobs until BER is back in baseline",
+    ],
+    relatedKinds: ["cartridge", "compute", "switch"],
+    tags: ["BER", "CRC", "replay", "NVLink", "cable cartridge", "signal integrity"],
   },
   {
     id: "cx8-down",

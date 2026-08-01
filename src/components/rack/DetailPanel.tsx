@@ -1,4 +1,4 @@
-import { X, Cpu, Zap, Network, Droplets, Server, Waves } from "lucide-react";
+import { X, Cpu, Zap, Network, Droplets, Server, Waves, Cable } from "lucide-react";
 import {
   ELEVATION_TOP_DOWN,
   getPart,
@@ -15,6 +15,7 @@ const KIND_ICON: Record<ComponentKind, typeof Cpu> = {
   manifold: Droplets,
   management: Server,
   cdu: Waves,
+  cartridge: Cable,
   frame: Server,
 };
 
@@ -44,7 +45,7 @@ export function DetailPanel({ selectedId, onClose, onOpenGuide }: DetailPanelPro
 
         <div>
           <h3 className="font-mono text-[11px] uppercase tracking-wider text-subtle">
-            Front elevation · top → bottom
+            Elevation & rear path
           </h3>
           <ol className="mt-2 space-y-1.5">
             {ELEVATION_TOP_DOWN.map((row, i) => (
@@ -70,10 +71,10 @@ export function DetailPanel({ selectedId, onClose, onOpenGuide }: DetailPanelPro
           {[
             { k: "CT trays", v: "CT1–CT18" },
             { k: "NVS trays", v: "NVS1–NVS9" },
+            { k: "Cable cart.", v: "CC1–CC4 rear" },
             { k: "PS33", v: "4 top + 4 bottom" },
             { k: "CDU", v: "External" },
-            { k: "GPUs", v: String(RACK_SPECS.gpus) },
-            { k: "NVLink", v: "130 TB/s" },
+            { k: "Watch", v: "Bent pins · BER" },
           ].map((row) => (
             <div
               key={row.k}
@@ -88,9 +89,9 @@ export function DetailPanel({ selectedId, onClose, onOpenGuide }: DetailPanelPro
         </div>
 
         <p className="text-sm leading-relaxed text-muted">
-          Power is split <span className="font-medium text-fg">4 PS33 top / 4 PS33 bottom</span>.
-          The <span className="font-medium text-fg">CDU is external</span> (in-row or facility);
-          in-rack pieces are only DLC manifolds and QDCs into that CDU.
+          Nodes blind-mate into <span className="font-medium text-fg">four rear cable cartridges</span>
+          . Use <span className="font-medium text-fg">Rear</span> view to inspect CC1–CC4. Field
+          issues: bent pins on mate and elevated NVLink BER/CRC on a cartridge path.
         </p>
       </div>
     );
@@ -112,7 +113,9 @@ export function DetailPanel({ selectedId, onClose, onOpenGuide }: DetailPanelPro
             <p className="font-mono text-[11px] uppercase tracking-wider text-muted">
               {part.placement === "external"
                 ? "External · not in U stack"
-                : `U${part.uStart}${part.uHeight > 1 ? `–U${part.uStart + part.uHeight - 1}` : ""}`}{" "}
+                : part.placement === "rear"
+                  ? "Rear · cable path"
+                  : `U${part.uStart}${part.uHeight > 1 ? `–U${part.uStart + part.uHeight - 1}` : ""}`}{" "}
               · {part.shortLabel}
             </p>
             <h2 className="text-lg font-semibold tracking-tight text-fg md:text-xl">
@@ -131,6 +134,14 @@ export function DetailPanel({ selectedId, onClose, onOpenGuide }: DetailPanelPro
       </div>
 
       <p className="mt-3 text-sm leading-relaxed text-muted">{part.description}</p>
+
+      {part.kind === "cartridge" && (
+        <div className="mt-3 rounded-lg border border-danger/30 bg-danger/10 px-3 py-2 text-xs leading-relaxed text-fg">
+          <span className="font-medium text-danger">Field watch: </span>
+          Bent/recessed pins after sled service, incomplete mate, and elevated BER/CRC on NVLink
+          lanes that traverse this cartridge.
+        </div>
+      )}
 
       <div className="mt-4 space-y-2">
         <h3 className="font-mono text-[11px] uppercase tracking-wider text-subtle">Specs</h3>

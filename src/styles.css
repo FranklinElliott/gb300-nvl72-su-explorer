@@ -2,7 +2,6 @@
 @import "tw-animate-css";
 
 @theme {
-  /* Dell-inspired enterprise dark theme */
   --color-bg: #0b0f14;
   --color-surface: #121820;
   --color-surface-2: #18212c;
@@ -19,6 +18,7 @@
   --color-switch: #7c9cff;
   --color-power: #f0a202;
   --color-coolant: #2ec4b6;
+  --color-cartridge: #e11d48;
   --color-danger: #e5484d;
   --color-warn: #f0a202;
   --color-ok: #30a46c;
