@@ -95,7 +95,8 @@ export function GuidePanel({ filterKind, onClearKindFilter }: GuidePanelProps) {
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search BER, bent pins, iDRAC, XID, PS33, CDU, NCCL…"
+            placeholder="Search RoCE, SN5610, AEC, SWP, BER, flaps, iDRAC, XID…"
+
             className="h-10 w-full rounded-lg border border-border bg-surface-2 pl-9 pr-9 text-sm text-fg placeholder:text-subtle outline-none ring-accent/40 focus:ring-2"
           />
           {query && (

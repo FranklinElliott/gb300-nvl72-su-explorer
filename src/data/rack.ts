@@ -145,14 +145,16 @@ function makeCompute(n: number, u: number, zone: RackZone): RackPart {
     shortLabel: `CT${n}`,
     uStart: u,
     uHeight: 1,
-    description: `Dell PowerEdge XE9712 CT${n} (${bank}). Blind-mates NVLink connectors into rear cable cartridge ${cartridge}. Bent pins or high BER on that cartridge path will isolate or degrade this node’s fabric links.`,
+    description: `Dell PowerEdge XE9712 CT${n} (${bank}). Blind-mates NVLink into rear cable cartridge ${cartridge}. East/west ConnectX-8 RoCE ports typically uplink over AEC to Dell PowerSwitch SN5610 leaf SWPs (isolate NIC vs AEC vs SWP on down/BER/flaps).`,
+
     specs: [
       { label: "Tray ID", value: `CT${n}` },
       { label: "Bank", value: bank },
       { label: "Rear cartridge", value: cartridge },
       { label: "GPUs", value: "4 × B300 · 288 GB HBM3e ea." },
       { label: "CPUs", value: "2 × Grace" },
-      { label: "East/West", value: "4× OSFP · ConnectX-8" },
+      { label: "East/West", value: "4× OSFP · ConnectX-8 RoCE → SN5610" },
+
       { label: "North/South", value: "1× BlueField-3" },
       { label: "Cooling", value: "DLC → external CDU" },
     ],
