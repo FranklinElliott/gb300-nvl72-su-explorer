@@ -1,37 +1,42 @@
-# GB300 NVL72 SU Explorer
+# Dell PowerEdge XE9712 · GB300 NVL72 SU Explorer
 
-Interactive **3D schematic model** of the **NVIDIA GB300 NVL72 Scalable Unit (SU)** plus an operator-oriented **troubleshooting guide**.
+Interactive **3D schematic** of a **Dell Integrated Rack Scalable System (IRSS)** SU:
 
-> One SU = one liquid-cooled GB300 NVL72 rack: **72 Blackwell Ultra GPUs**, **36 Grace CPUs**, **9 NVLink switch trays**, **8 power shelves**, full in-rack NVLink domain (~130 TB/s class).
+| Layer | Product |
+| --- | --- |
+| Compute sleds | **Dell PowerEdge XE9712** (18 × 1U) |
+| GPU platform | **NVIDIA GB300 NVL72** · 72× B300 + 36× Grace |
+| Rack | **Dell IR9048** ORv3 · 48U · Direct Liquid Cooling |
+| Power | **PS33** 33 kW shelves (6 × 5500 W) on ORv3 busbar |
+| Management | **iDRAC 10 / OpenBMC** · **OpenManage Enterprise** · PowerSwitch SN2201 OOB |
 
 ## Features
 
-- Orbit / zoom / click any tray in a procedural 3D rack model
-- Component filters (compute, NVSwitch, power, coolant, management)
-- Exploded view by subsystem class
-- Detail drawer with tray specs
-- Searchable troubleshooting playbook (cooling, power, NVLink, CX-8, BlueField, BMC, storage, multi-SU)
+- Orbit / zoom / click any sled or tray
+- Filters for XE9712, NVLink switch, PS33, DLC, OOB
+- Exploded subsystem view
+- Spec drawer with Dell-oriented tray details
+- Searchable operator guide (DLC leaks, PS33, iDRAC, NVLink, CX-8, BF3, OME, multi-SU)
 
 ## Stack
 
-- React 19 + TypeScript + Vite + TanStack Start
-- React Three Fiber + Drei + Three.js
-- Tailwind CSS v4
+React 19 · TypeScript · Vite · TanStack Start · React Three Fiber · Tailwind CSS v4
 
 ## Run
 
 ```bash
 npm install
-npm run dev    # http://0.0.0.0:8080
+npm run dev    # 0.0.0.0:8080
 npm run build
 npm run typecheck
 ```
 
 ## Disclaimer
 
-Educational schematic — **not** an OEM mechanical drawing or certified field service manual. Always follow site emergency operating procedures and NVIDIA / ODM documentation for production systems.
+Educational schematic based on public Dell / NVIDIA materials — **not** a certified mechanical drawing or Dell field service manual. Always follow **Dell ProSupport** procedures and site EOPs on production systems.
 
-## Spec sources (public)
+## Public references
 
-- [NVIDIA GB300 NVL72](https://www.nvidia.com/en-us/data-center/gb300-nvl72/)
-- [NVL72 AI Factory components](https://docs.nvidia.com/enterprise-reference-architectures/nvl72-ai-factory/latest/components.html)
+- [Dell PowerEdge XE9712](https://www.dell.com/en-us/shop/ipovw/poweredge-xe9712)
+- [PowerEdge XE9712 spec sheet](https://www.delltechnologies.com/asset/en-us/products/servers/technical-support/poweredge-xe9712-spec-sheet.pdf)
+- [Dell + NVIDIA GB300 NVL72 IRSS](https://www.dell.com/en-us/blog/dell-delivers-market-s-first-nvidia-gb300-nvl72-to-coreweave/)

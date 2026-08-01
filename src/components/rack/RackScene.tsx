@@ -5,8 +5,8 @@ import * as THREE from "three";
 import { RACK_PARTS, type RackPart } from "@/data/rack";
 
 const U_HEIGHT = 0.05;
-const RACK_W = 0.72;
-const RACK_D = 1.0;
+const RACK_W = 0.78;
+const RACK_D = 1.05;
 const RACK_INNER_H = 48 * U_HEIGHT;
 
 type RackSceneProps = {
@@ -122,15 +122,16 @@ function TrayMesh({
         />
       </mesh>
 
+      {/* Dell-blue GPU indicators on XE9712 sleds */}
       {part.kind === "compute" && !dimmed && (
         <group position={[0, 0, depth / 2 + 0.014]}>
           {[-0.2, -0.07, 0.07, 0.2].map((ox, i) => (
             <mesh key={i} position={[ox, 0, 0]}>
               <boxGeometry args={[0.08, h * 0.38, 0.014]} />
               <meshStandardMaterial
-                color="#76b900"
-                emissive="#76b900"
-                emissiveIntensity={selected ? 1.55 : 0.9}
+                color="#0076ce"
+                emissive="#0076ce"
+                emissiveIntensity={selected ? 1.55 : 0.95}
               />
             </mesh>
           ))}
@@ -143,8 +144,8 @@ function TrayMesh({
             <mesh key={i} position={[ox, 0, 0]}>
               <boxGeometry args={[0.12, h * 0.42, 0.014]} />
               <meshStandardMaterial
-                color="#ddd6fe"
-                emissive="#a78bfa"
+                color="#c7d2fe"
+                emissive="#7c9cff"
                 emissiveIntensity={selected ? 1.35 : 0.8}
               />
             </mesh>
@@ -159,7 +160,7 @@ function TrayMesh({
               <boxGeometry args={[0.05, h * 0.48, 0.012]} />
               <meshStandardMaterial
                 color={i % 2 === 0 ? "#fbbf24" : "#92400e"}
-                emissive="#f59e0b"
+                emissive="#f0a202"
                 emissiveIntensity={0.6}
               />
             </mesh>
@@ -207,7 +208,6 @@ function RackFrame() {
           <meshStandardMaterial color="#6b7280" metalness={0.5} roughness={0.38} />
         </mesh>
       ))}
-      {/* Side perforated feel */}
       {[-1, 1].map((side) => (
         <mesh key={side} position={[(RACK_W / 2 + 0.01) * side, 0, 0]}>
           <boxGeometry args={[0.012, h * 0.96, RACK_D * 0.88]} />
@@ -220,9 +220,10 @@ function RackFrame() {
           />
         </mesh>
       ))}
+      {/* Dell accent badge */}
       <mesh position={[0, h / 2 - 0.07, RACK_D / 2 + 0.03]}>
-        <boxGeometry args={[0.34, 0.06, 0.02]} />
-        <meshStandardMaterial color="#76b900" emissive="#76b900" emissiveIntensity={1.15} />
+        <boxGeometry args={[0.38, 0.06, 0.02]} />
+        <meshStandardMaterial color="#0076ce" emissive="#0076ce" emissiveIntensity={1.15} />
       </mesh>
     </group>
   );
@@ -242,8 +243,8 @@ function CoolantPipe({ explode }: { explode: boolean }) {
       <cylinderGeometry args={[0.025, 0.025, RACK_INNER_H * 0.92, 20]} />
       <meshStandardMaterial
         ref={matRef}
-        color="#67e8f9"
-        emissive="#22d3ee"
+        color="#5eead4"
+        emissive="#2ec4b6"
         emissiveIntensity={0.75}
         metalness={0.15}
         roughness={0.28}
@@ -263,12 +264,12 @@ function SceneContent({
 
   return (
     <>
-      <color attach="background" args={["#0a0b0c"]} />
+      <color attach="background" args={["#0b0f14"]} />
       <ambientLight intensity={1.05} />
-      <hemisphereLight args={["#e2e8f0", "#0a0b0c", 0.45]} />
+      <hemisphereLight args={["#dbeafe", "#0b0f14", 0.45]} />
       <directionalLight position={[4, 6, 5]} intensity={1.9} />
-      <directionalLight position={[-4, 2, -2]} intensity={0.7} color="#86efac" />
-      <pointLight position={[2, 1, 3]} intensity={1.0} color="#93c5fd" />
+      <directionalLight position={[-4, 2, -2]} intensity={0.75} color="#93c5fd" />
+      <pointLight position={[2, 1, 3]} intensity={1.0} color="#60a5fa" />
 
       <group>
         <RackFrame />
@@ -293,7 +294,7 @@ function SceneContent({
 
       <mesh position={[0, -RACK_INNER_H / 2 - 0.12, 0]} rotation={[-Math.PI / 2, 0, 0]}>
         <circleGeometry args={[4.2, 64]} />
-        <meshStandardMaterial color="#12151a" metalness={0.12} roughness={0.94} />
+        <meshStandardMaterial color="#121820" metalness={0.12} roughness={0.94} />
       </mesh>
 
       <OrbitControls
@@ -314,7 +315,7 @@ export function RackScene(props: RackSceneProps) {
   return (
     <div className="relative h-full min-h-[320px] w-full bg-bg">
       <Canvas
-        camera={{ position: [2.8, 0.55, 3.35], fov: 40, near: 0.05, far: 100 }}
+        camera={{ position: [2.9, 0.55, 3.4], fov: 40, near: 0.05, far: 100 }}
         dpr={[1, 1.75]}
         gl={{
           antialias: true,
@@ -323,14 +324,14 @@ export function RackScene(props: RackSceneProps) {
           preserveDrawingBuffer: true,
         }}
         onCreated={({ gl }) => {
-          gl.setClearColor("#0a0b0c", 1);
+          gl.setClearColor("#0b0f14", 1);
         }}
         onPointerMissed={() => props.onSelect(null)}
       >
         <SceneContent {...props} />
       </Canvas>
       <div className="pointer-events-none absolute bottom-3 left-3 rounded-md border border-border bg-surface/80 px-2.5 py-1.5 font-mono text-[10px] text-muted backdrop-blur-sm">
-        Drag to orbit · Scroll zoom · Click tray
+        Drag to orbit · Scroll zoom · Click sled
       </div>
     </div>
   );

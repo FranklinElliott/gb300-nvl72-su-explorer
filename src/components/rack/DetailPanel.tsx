@@ -25,24 +25,26 @@ export function DetailPanel({ selectedId, onClose, onOpenGuide }: DetailPanelPro
       <div className="flex h-full flex-col gap-4 p-4 md:p-5">
         <div>
           <p className="font-mono text-[11px] uppercase tracking-wider text-accent">
-            Scalable Unit
+            Dell Integrated Rack · SU
           </p>
           <h2 className="mt-1 text-xl font-semibold tracking-tight text-fg md:text-2xl">
             {RACK_SPECS.name}
           </h2>
-          <p className="mt-1 text-sm text-muted">{RACK_SPECS.role} · {RACK_SPECS.formFactor}</p>
+          <p className="mt-1 text-sm text-muted">
+            {RACK_SPECS.platform} · {RACK_SPECS.formFactor}
+          </p>
         </div>
 
         <div className="grid grid-cols-2 gap-2">
           {[
             { k: "GPUs", v: String(RACK_SPECS.gpus) },
             { k: "Grace CPUs", v: String(RACK_SPECS.cpus) },
-            { k: "Compute trays", v: String(RACK_SPECS.computeTrays) },
-            { k: "NVSwitch trays", v: String(RACK_SPECS.switchTrays) },
-            { k: "Power shelves", v: String(RACK_SPECS.powerShelves) },
+            { k: "XE9712 sleds", v: String(RACK_SPECS.computeTrays) },
+            { k: "NVLink trays", v: String(RACK_SPECS.switchTrays) },
+            { k: "PS33 shelves", v: String(RACK_SPECS.powerShelves) },
             { k: "NVLink", v: RACK_SPECS.nvlinkBandwidth },
             { k: "GPU memory", v: RACK_SPECS.gpuMemory },
-            { k: "CPU memory", v: RACK_SPECS.cpuMemory },
+            { k: "Management", v: "iDRAC / OME" },
           ].map((row) => (
             <div
               key={row.k}
@@ -57,14 +59,24 @@ export function DetailPanel({ selectedId, onClose, onOpenGuide }: DetailPanelPro
         </div>
 
         <p className="text-sm leading-relaxed text-muted">
-          Click any tray in the 3D rack to inspect compute, NVLink switch, power, or
-          coolant components. One SU = one liquid-cooled NVL72 rack (72 Blackwell Ultra
-          GPUs as a single NVLink domain).
+          Click any tray in the 3D IR9048 rack to inspect PowerEdge XE9712 sleds, NVLink
+          switches, PS33 power, DLC manifolds, or OOB management. One SU = one liquid-cooled
+          Dell Integrated Rack with 72 Blackwell Ultra GPUs as a single NVLink domain.
         </p>
 
-        <div className="mt-auto rounded-lg border border-border bg-surface-2 p-3 text-xs text-muted">
-          <span className="font-medium text-fg">Tip: </span>
-          Use Explode view to separate component classes, or filter by type in the legend.
+        <div className="mt-auto space-y-2 rounded-lg border border-border bg-surface-2 p-3 text-xs text-muted">
+          <div>
+            <span className="font-medium text-fg">Rack: </span>
+            {RACK_SPECS.dimensions}
+          </div>
+          <div>
+            <span className="font-medium text-fg">Support: </span>
+            {RACK_SPECS.support}
+          </div>
+          <div>
+            <span className="font-medium text-fg">Tip: </span>
+            Use Explode view or filter chips to isolate subsystem classes.
+          </div>
         </div>
       </div>
     );
@@ -129,7 +141,7 @@ export function DetailPanel({ selectedId, onClose, onOpenGuide }: DetailPanelPro
           "text-sm font-medium text-accent transition-colors hover:bg-accent/20",
         )}
       >
-        Related troubleshooting
+        Related Dell troubleshooting
       </button>
     </div>
   );

@@ -10,12 +10,12 @@ export const Route = createRootRoute({
         content: "width=device-width, initial-scale=1, viewport-fit=cover",
       },
       {
-        title: "GB300 NVL72 SU Explorer — 3D Model & Troubleshooting",
+        title: "Dell PowerEdge XE9712 · GB300 NVL72 SU Explorer",
       },
       {
         name: "description",
         content:
-          "Interactive 3D model of the NVIDIA GB300 NVL72 Scalable Unit with rack anatomy and operator troubleshooting guide.",
+          "Interactive 3D model of the Dell PowerEdge XE9712 (NVIDIA GB300 NVL72) Integrated Rack Scalable System with operator troubleshooting guide.",
       },
     ],
     links: [

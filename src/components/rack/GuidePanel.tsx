@@ -42,11 +42,11 @@ export function GuidePanel({ filterKind, onClearKindFilter }: GuidePanelProps) {
       <div className="border-b border-border p-4 md:p-5">
         <div className="flex items-center gap-2">
           <AlertTriangle className="size-4 text-warn" />
-          <h2 className="text-base font-semibold text-fg">Troubleshooting guide</h2>
+          <h2 className="text-base font-semibold text-fg">Dell operator guide</h2>
         </div>
         <p className="mt-1 text-xs leading-relaxed text-muted">
-          Operator playbook for one GB300 NVL72 SU. Educational reference — always follow
-          site EOPs and OEM procedures for live systems.
+          Playbook for one PowerEdge XE9712 / IR9048 SU. Educational reference — follow Dell
+          ProSupport procedures and site EOPs on production systems.
         </p>
 
         <div className="relative mt-3">
@@ -54,7 +54,7 @@ export function GuidePanel({ filterKind, onClearKindFilter }: GuidePanelProps) {
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search symptoms, NVLink, leak, BMC…"
+            placeholder="Search iDRAC, leak, PS33, NVLink…"
             className="h-10 w-full rounded-lg border border-border bg-surface-2 pl-9 pr-3 text-sm text-fg placeholder:text-subtle outline-none ring-accent/40 focus:ring-2"
           />
         </div>

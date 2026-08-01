@@ -44,10 +44,10 @@ function Home() {
             </div>
             <div className="min-w-0">
               <h1 className="truncate text-sm font-semibold tracking-tight text-fg md:text-base">
-                GB300 NVL72 SU Explorer
+                Dell XE9712 · GB300 NVL72
               </h1>
               <p className="truncate font-mono text-[10px] text-muted md:text-[11px]">
-                {RACK_SPECS.gpus} GPU · {RACK_SPECS.cpus} Grace · {RACK_SPECS.role}
+                {RACK_SPECS.gpus} GPU · IR9048 IRSS · {RACK_SPECS.role}
               </p>
             </div>
           </div>
@@ -125,13 +125,14 @@ function Home() {
             })}
           </div>
 
-          <div className="pointer-events-none absolute bottom-12 right-3 hidden max-w-[200px] rounded-lg border border-border bg-surface/90 p-2.5 text-[10px] leading-relaxed text-muted backdrop-blur-sm md:block">
+          <div className="pointer-events-none absolute bottom-12 right-3 hidden max-w-[220px] rounded-lg border border-border bg-surface/90 p-2.5 text-[10px] leading-relaxed text-muted backdrop-blur-sm md:block">
             <div className="mb-1 flex items-center gap-1 font-medium text-fg">
               <Info className="size-3" />
-              Schematic model
+              Dell IR9048 schematic
             </div>
-            Educational layout of one SU (not a certified mechanical drawing). Specs
-            reflect public GB300 NVL72 architecture.
+            Educational layout of one Dell Integrated Rack SU with PowerEdge XE9712 sleds
+            — not a certified mechanical drawing. Follow Dell ProSupport procedures on live
+            systems.
           </div>
         </section>
 

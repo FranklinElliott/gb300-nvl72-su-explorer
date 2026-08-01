@@ -2,25 +2,26 @@
 @import "tw-animate-css";
 
 @theme {
-  --color-bg: #0a0b0c;
-  --color-surface: #121416;
-  --color-surface-2: #1a1d21;
-  --color-surface-3: #23272c;
-  --color-fg: #eef0f2;
-  --color-muted: #8b939e;
-  --color-subtle: #5c6570;
-  --color-border: #2a3038;
-  --color-border-strong: #3d4652;
-  --color-accent: #76b900;
-  --color-accent-dim: #5a8f00;
-  --color-accent-fg: #0a0b0c;
+  /* Dell-inspired enterprise dark theme */
+  --color-bg: #0b0f14;
+  --color-surface: #121820;
+  --color-surface-2: #18212c;
+  --color-surface-3: #222d3a;
+  --color-fg: #eef2f6;
+  --color-muted: #8b98a8;
+  --color-subtle: #5c6b7a;
+  --color-border: #2a3644;
+  --color-border-strong: #3d4d5e;
+  --color-accent: #0076ce;
+  --color-accent-dim: #005a9e;
+  --color-accent-fg: #ffffff;
   --color-compute: #3d8bfd;
-  --color-switch: #a78bfa;
-  --color-power: #f59e0b;
-  --color-coolant: #22d3ee;
-  --color-danger: #ef4444;
-  --color-warn: #f59e0b;
-  --color-ok: #22c55e;
+  --color-switch: #7c9cff;
+  --color-power: #f0a202;
+  --color-coolant: #2ec4b6;
+  --color-danger: #e5484d;
+  --color-warn: #f0a202;
+  --color-ok: #30a46c;
   --font-sans: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
   --font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
   --radius-sm: 0.375rem;
