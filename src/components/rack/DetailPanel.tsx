@@ -1,4 +1,4 @@
-import { X, Cpu, Zap, Network, Droplets, Server, Waves, Cable } from "lucide-react";
+import { X, Cpu, Zap, Network, Droplets, Server, Cable } from "lucide-react";
 import {
   ELEVATION_TOP_DOWN,
   getPart,
@@ -14,7 +14,6 @@ const KIND_ICON: Record<ComponentKind, typeof Cpu> = {
   power: Zap,
   manifold: Droplets,
   management: Server,
-  cdu: Waves,
   cartridge: Cable,
   frame: Server,
 };
@@ -73,7 +72,7 @@ export function DetailPanel({ selectedId, onClose, onOpenGuide }: DetailPanelPro
             { k: "NVS trays", v: "NVS1–NVS9" },
             { k: "Cable cart.", v: "CC1–CC4 rear" },
             { k: "PS33", v: "4 top + 4 bottom" },
-            { k: "CDU", v: "External" },
+            { k: "Cooling", v: "DLC · FacOps plant" },
             { k: "Watch", v: "Bent pins · BER" },
           ].map((row) => (
             <div
@@ -111,11 +110,9 @@ export function DetailPanel({ selectedId, onClose, onOpenGuide }: DetailPanelPro
           </div>
           <div>
             <p className="font-mono text-[11px] uppercase tracking-wider text-muted">
-              {part.placement === "external"
-                ? "External · not in U stack"
-                : part.placement === "rear"
-                  ? "Rear · cable path"
-                  : `U${part.uStart}${part.uHeight > 1 ? `–U${part.uStart + part.uHeight - 1}` : ""}`}{" "}
+              {part.placement === "rear"
+                ? "Rear · cable path"
+                : `U${part.uStart}${part.uHeight > 1 ? `–U${part.uStart + part.uHeight - 1}` : ""}`}{" "}
               · {part.shortLabel}
             </p>
             <h2 className="text-lg font-semibold tracking-tight text-fg md:text-xl">

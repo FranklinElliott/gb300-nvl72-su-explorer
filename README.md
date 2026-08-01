@@ -19,7 +19,7 @@ Deployed via GitHub Actions → GitHub Pages (`npm run build:pages`).
 | **NVS9 – NVS1** | 9 × NVLink switch trays |
 | **CT8 – CT1** | 8 × PowerEdge XE9712 |
 | **PS33 × 4 (bottom)** | PS33-1–4 |
-| **External CDU** | In-row / facility — not in U stack |
+| **Facility plant** | Outside data hall · FacOps · multi-cabinet (not in model) |
 
 ## Rear
 

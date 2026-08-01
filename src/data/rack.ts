@@ -4,7 +4,6 @@ export type ComponentKind =
   | "power"
   | "manifold"
   | "management"
-  | "cdu"
   | "cartridge"
   | "frame";
 
@@ -16,10 +15,9 @@ export type RackZone =
   | "ct-high"
   | "mgmt"
   | "service"
-  | "cdu-external"
   | "rear-cartridge";
 
-export type Placement = "in-rack" | "external" | "rear";
+export type Placement = "in-rack" | "rear";
 
 export type RackPart = {
   id: string;
@@ -42,13 +40,13 @@ export type RackPart = {
  *   PS33×4 bottom → CT1–8 → NVS1–9 → CT9–18 → PS33×4 top → OOB
  *
  * Rear: 4 NVLink cable cartridges (CC1–CC4) that CT/NVS nodes blind-mate into.
- * CDU: external sidecar.
+ * Facility cooling (CDU plant) is outside the data hall — FacOps, not this SU model.
  */
 export const RACK_SPECS = {
   name: "Dell PowerEdge XE9712",
   platform: "NVIDIA GB300 NVL72",
   role: "Integrated Rack Scalable System (SU)",
-  formFactor: "48U Dell IR9048 ORv3 · DLC to external CDU",
+  formFactor: "48U Dell IR9048 ORv3 · rack DLC manifolds",
   dimensions: "≈ 2294 × 750 × 1200 mm (H×W×D)",
   weight: "≈ 1590 kg wet cabinet class",
   power: "8× PS33 · 4 bottom + 4 top",
@@ -61,7 +59,7 @@ export const RACK_SPECS = {
   powerLayout: "4 PS33 bottom · 4 PS33 top",
   stackOrder: "PS33 top · CT18–9 · NVS9–1 · CT8–1 · PS33 bottom",
   rear: "4× NVLink cable cartridges (CC1–CC4)",
-  cdu: "External (in-row / facility) — not in-rack",
+  cooling: "In-rack DLC manifolds/QDCs · facility plant is FacOps (outside hall)",
   nvlinkBandwidth: "130 TB/s aggregate NVLink",
   gpuMemory: "288 GB HBM3e × 72 (~20 TB)",
   cpuMemory: "Up to 480 GB LPDDR5 / Grace",
@@ -77,7 +75,6 @@ export const COMPONENT_COLORS: Record<ComponentKind, string> = {
   power: "#f0a202",
   manifold: "#2ec4b6",
   management: "#94a3b8",
-  cdu: "#14b8a6",
   cartridge: "#e11d48",
   frame: "#4b5563",
 };
@@ -156,7 +153,7 @@ function makeCompute(n: number, u: number, zone: RackZone): RackPart {
       { label: "East/West", value: "4× OSFP · ConnectX-8 RoCE → SN5610" },
 
       { label: "North/South", value: "1× BlueField-3" },
-      { label: "Cooling", value: "DLC → external CDU" },
+      { label: "Cooling", value: "In-rack DLC · facility plant (FacOps)" },
     ],
     color: COMPONENT_COLORS.compute,
     matesTo: cartridge,
@@ -230,10 +227,10 @@ function buildLayout(): RackPart[] {
     uStart: u,
     uHeight: 1,
     description:
-      "In-rack lower liquid manifold and QDCs to the external CDU. Not the CDU itself.",
+      "In-rack lower liquid manifold and tray QDCs. Facility coolant plant / CDU is outside the data hall (FacOps) and serves many cabinets — not modeled on this SU.",
     specs: [
       { label: "Role", value: "Rack coolant interface" },
-      { label: "CDU", value: "External" },
+      { label: "Facility plant", value: "FacOps · outside data hall" },
     ],
     color: COMPONENT_COLORS.manifold,
   });
@@ -265,10 +262,10 @@ function buildLayout(): RackPart[] {
     shortLabel: "DLC-U",
     uStart: u,
     uHeight: 1,
-    description: "Upper manifold / hose routing near top PS33 bank.",
+    description: "Upper manifold / hose routing near top PS33 bank. Facility plant remains FacOps outside the hall.",
     specs: [
       { label: "Role", value: "Upper manifold + cabling" },
-      { label: "CDU", value: "External" },
+      { label: "Facility plant", value: "FacOps · multi-cabinet" },
     ],
     color: COMPONENT_COLORS.manifold,
   });
@@ -295,31 +292,11 @@ function buildLayout(): RackPart[] {
     parts.push(makeCartridge(n));
   }
 
-  parts.push({
-    id: "cdu-external",
-    kind: "cdu",
-    zone: "cdu-external",
-    placement: "external",
-    label: "External CDU (in-row / facility)",
-    shortLabel: "CDU",
-    uStart: 0,
-    uHeight: 0,
-    description:
-      "Coolant Distribution Unit outside the IR9048 — in-row or facility plant. Rack only has manifolds/QDCs into this unit.",
-    specs: [
-      { label: "Location", value: "External to IR9048" },
-      { label: "Loop", value: "Secondary DLC ↔ facility primary" },
-      { label: "Redundancy", value: "N+1 pumps (design dependent)" },
-    ],
-    color: COMPONENT_COLORS.cdu,
-  });
-
   return parts;
 }
 
 export const RACK_PARTS = buildLayout();
 export const IN_RACK_PARTS = RACK_PARTS.filter((p) => p.placement === "in-rack");
-export const EXTERNAL_PARTS = RACK_PARTS.filter((p) => p.placement === "external");
 export const REAR_PARTS = RACK_PARTS.filter((p) => p.placement === "rear");
 
 export const ELEVATION_TOP_DOWN = [
@@ -359,12 +336,6 @@ export const ELEVATION_TOP_DOWN = [
     detail: "Cable cartridges · nodes blind-mate",
     kind: "cartridge" as const,
   },
-  {
-    id: "cdu",
-    label: "External CDU",
-    detail: "Beside rack · not in U stack",
-    kind: "cdu" as const,
-  },
 ];
 
 export function getPart(id: string | null): RackPart | undefined {
@@ -377,7 +348,6 @@ export const KIND_LEGEND: { kind: ComponentKind; label: string; count: string }[
   { kind: "switch", label: "NVS trays", count: "NVS1–9" },
   { kind: "cartridge", label: "Cable cart.", count: "CC1–4 rear" },
   { kind: "power", label: "PS33", count: "4+4" },
-  { kind: "cdu", label: "External CDU", count: "Sidecar" },
   { kind: "manifold", label: "DLC manifolds", count: "In-rack" },
   { kind: "management", label: "OOB / iDRAC", count: "SN2201" },
 ];

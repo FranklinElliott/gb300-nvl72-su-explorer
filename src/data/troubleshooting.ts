@@ -8,7 +8,6 @@ export type ComponentKindRef =
   | "power"
   | "manifold"
   | "management"
-  | "cdu"
   | "cartridge"
   | "frame";
 
@@ -92,24 +91,24 @@ export const TROUBLESHOOTING_GUIDE: GuideSection[] = [
       "Latching leak events on IR9048 manifolds or CT/NVS cold-plate QDCs. Treat as electrical safety until dry.",
     symptoms: [
       "OpenManage Enterprise / iDRAC / rack controller asserts leak",
-      "Facility BMS or external CDU interlock on secondary loop",
+      "Facility BMS or facility plant interlock on secondary loop (FacOps)",
       "Visible moisture at QDCs, drip trays, or bulkhead fittings",
       "Policy-driven emergency power-off risk on some sites",
     ],
     checks: [
-      "Is the hit on in-rack manifold sensors vs external CDU drip tray?",
+      "Is the hit on in-rack manifold sensors vs facility header (FacOps plant)?",
       "Which CT/NVS tray QDCs show wetness (map CT1–18 / NVS1–9)?",
-      "Secondary loop pressure and isolation valve positions to external CDU",
+      "Secondary loop pressure and isolation valve positions at rack bulkhead (FacOps owns plant side)",
       "Whether power was still applied after the first leak event",
     ],
     actions: [
       "Follow site EOP first — isolate electrical if liquid near busbar/PS33",
       "Do not clear latching leak alarms until dry and revalidated",
       "Reseat QDCs; replace O-rings/hoses per Dell FRU procedure",
-      "Engage Dell ProSupport Plus + facilities for external CDU hose work",
+      "Engage FacOps for plant-side hoses; Dell ProSupport Plus for in-rack FRUs",
       "Log Service Tags, rack location, and photos before RMA",
     ],
-    relatedKinds: ["manifold", "cdu", "compute", "switch"],
+    relatedKinds: ["manifold", "compute", "switch"],
     tags: ["leak", "DLC", "QDC", "safety", "OpenManage", "iDRAC"],
     sources: [
       "Dell IR9048 / IRSS liquid cooling install & service notes",
@@ -117,36 +116,36 @@ export const TROUBLESHOOTING_GUIDE: GuideSection[] = [
     ],
   },
   {
-    id: "external-cdu",
+    id: "facops-plant",
     category: "Cooling",
-    title: "External CDU fault (in-row / facility)",
+    title: "Facility coolant plant issues (FacOps · outside data hall)",
     severity: "critical",
     vendor: "dell",
     summary:
-      "Coolant Distribution Unit is outside the 48U stack. Multi-tray thermal rise usually points here, not a single sled.",
+      "CDU / secondary plant sits outside the data hall and feeds many cabinets. IT rack ops own in-rack manifolds/QDCs only — escalate plant flow, ΔP, and pumps to FacOps.",
     symptoms: [
-      "CDU low flow, high ΔP, pump failover, or filter clog alarms",
-      "Many CT/NVS trays heat together",
-      "BMS alarms on external CDU while IR9048 looks dry",
-      "Peer SUs sharing the same plant also degrade",
+      "Many IR9048 / SU cabinets heat together across the hall",
+      "Facility BMS alarms on plant pumps, heat exchangers, or primary water",
+      "In-rack leak sensors dry but secondary supply pressure/temp out of range",
+      "Plant maintenance window coincides with fleet thermal events",
     ],
     checks: [
-      "Confirm CDU is external — do not open IR9048 looking for a CDU chassis",
-      "N+1 pump status, strainer DP, primary facility water",
-      "Hose isolation valves IR9048 bulkhead ↔ CDU",
-      "Secondary inlet temp/flow vs Dell design envelope",
+      "Do not look for a CDU chassis in the IR9048 U stack or beside a single rack in this model",
+      "Confirm event is multi-cabinet (FacOps plant) vs single-rack manifold/QDC",
+      "IT: rack QDC isolation valves and local sensors only",
+      "FacOps: plant pumps, strainers, primary loop, multi-cabinet headers",
     ],
     actions: [
-      "Fail over standby pump; service filters on the external CDU",
-      "Lock out primary loops with facilities before hose work",
-      "Reduce SU load until secondary flow is restored",
-      "Coordinate Dell + mechanical contractor for capacity/RMA",
+      "Open FacOps ticket with affected cabinet IDs and supply/return readings",
+      "IT reduces load / drains jobs if plant flow is inadequate",
+      "Do not service plant valves or CDUs without FacOps LOTO",
+      "After plant restore, IT re-validates in-rack leak sensors and tray thermals",
     ],
-    relatedKinds: ["cdu", "manifold"],
-    tags: ["CDU", "external", "pump", "facility", "flow", "ΔP"],
+    relatedKinds: ["manifold"],
+    tags: ["FacOps", "facility plant", "facility plant", "multi-cabinet", "outside hall", "flow"],
     sources: [
-      "Dell Integrated Rack CDU interface / facility design guides",
-      "Site mechanical EOP for secondary loop",
+      "Site FacOps secondary loop / plant runbooks",
+      "Dell IRSS facility interface notes (IT vs facilities split)",
     ],
   },
   {
@@ -164,19 +163,19 @@ export const TROUBLESHOOTING_GUIDE: GuideSection[] = [
       "NVSwitch trays warmer than adjacent CT trays",
     ],
     checks: [
-      "External CDU inlet temp and flow (Dell)",
+      "Facility plant supply temp/flow via FacOps (multi-cabinet)",
       "Upper vs lower manifold balance (Dell)",
       "Cold-plate seating on hottest CT/NVS (Dell FRU)",
       "NVIDIA thermal thresholds / throttle reasons in HMC/DCGM",
       "Firmware levels: BMC, HMC, GPU VBIOS (Dell bundle vs NVIDIA)",
     ],
     actions: [
-      "Restore CDU flow / inlet within design before chasing single GPUs",
+      "Confirm FacOps plant supply within design before chasing single GPUs",
       "Reseat cold plates on hot trays per Dell",
       "Apply Dell-supported NVIDIA firmware if thermal fixes apply",
       "If one GPU stays hot after loop is healthy → package / cold-plate FRU",
     ],
-    relatedKinds: ["compute", "switch", "manifold", "cdu"],
+    relatedKinds: ["compute", "switch", "manifold"],
     tags: ["thermal", "throttle", "B300", "NVSwitch", "DCGM", "HMC", "iDRAC"],
     sources: [
       "NVIDIA DCGM / NVSM thermal fields",
@@ -189,7 +188,7 @@ export const TROUBLESHOOTING_GUIDE: GuideSection[] = [
     title: "Single-tray cold plate / QDC flow restriction",
     severity: "major",
     vendor: "dell",
-    summary: "One CT or NVS runs hot while peers and external CDU look fine.",
+    summary: "One CT or NVS runs hot while peers look fine and FacOps reports plant OK.",
     symptoms: [
       "Single CT or NVS thermal outlier",
       "Local leak sensor intermittent on one tray",
@@ -280,12 +279,12 @@ export const TROUBLESHOOTING_GUIDE: GuideSection[] = [
     checks: [
       "Per-shelf Watts for PS33-1–4 and PS33-5–8",
       "Facility feed and PDU breaker ratings",
-      "Whether external CDU heat rejection limits are the real ceiling",
+      "Whether FacOps plant heat rejection is the real ceiling (multi-cabinet)",
     ],
     actions: [
       "Stagger job ramp; apply coordinated power policies",
       "Rebalance workloads across SUs",
-      "Confirm CDU can accept full heat before raising caps",
+      "Confirm with FacOps that plant can accept full heat before raising caps",
     ],
     relatedKinds: ["power", "compute"],
     tags: ["budget", "capping", "OME", "facility"],
@@ -1076,24 +1075,24 @@ export const TROUBLESHOOTING_GUIDE: GuideSection[] = [
     title: "Multi-SU scale-out imbalance",
     severity: "info",
     vendor: "both",
-    summary: "NVLink is single-rack L1; multi-rack depends on CX-8 fabric and shared CDU plant.",
+    summary: "NVLink is single-rack L1; multi-rack depends on CX-8 fabric and shared facility plant (FacOps).",
     symptoms: [
       "Jobs across IR9048 racks slower than single-SU",
-      "Shared external CDU constrains several SUs",
+      "Shared facility plant (outside hall) constrains several SUs",
       "One SU’s east/west is the bottleneck",
     ],
     checks: [
       "Per-SU NVLink domain first (NVIDIA fabric health)",
       "East/west leaf utilization",
-      "Shared CDU capacity vs concurrent load",
+      "FacOps plant capacity vs concurrent multi-cabinet load",
     ],
     actions: [
       "Pin NVLink-heavy stages inside one SU",
-      "Upsize inter-rack bandwidth or CDU plant",
+      "Upsize inter-rack bandwidth or work FacOps plant capacity",
       "Schedule multi-SU jobs with thermal headroom",
     ],
-    relatedKinds: ["switch", "compute", "cdu"],
-    tags: ["SU", "scale-out", "NCCL", "CDU plant"],
+    relatedKinds: ["switch", "compute"],
+    tags: ["SU", "scale-out", "NCCL", "facility plant"],
     sources: ["NVIDIA multi-node scaling guidance", "Dell multi-rack IRSS design"],
   },
   {
@@ -1160,7 +1159,7 @@ export const TROUBLESHOOTING_GUIDE: GuideSection[] = [
       "Partial inventory after uncrate",
     ],
     checks: [
-      "External CDU online and secondary flow proven (Dell)",
+      "FacOps proves facility plant secondary flow before IT load (outside hall)",
       "PS33 both banks green; no leak sensors (Dell)",
       "All CT1–18 and NVS1–9 present (Dell OME + NVIDIA inventory)",
       "CC1–4 latched; no pin damage (Dell)",
@@ -1172,7 +1171,7 @@ export const TROUBLESHOOTING_GUIDE: GuideSection[] = [
       "Run NVIDIA fabric + NCCL smoke tests; archive results",
       "Hand off with Service Tags and as-built elevation",
     ],
-    relatedKinds: ["power", "cdu", "compute", "switch", "cartridge", "management"],
+    relatedKinds: ["power", "compute", "switch", "cartridge", "management"],
     tags: ["bring-up", "checklist", "soak", "smoke test"],
     sources: [
       "Dell IRSS install guide",

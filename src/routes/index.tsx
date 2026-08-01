@@ -54,7 +54,7 @@ function Home() {
                 Dell XE9712 · GB300 NVL72
               </h1>
               <p className="truncate font-mono text-[10px] text-muted md:text-[11px]">
-                CT/NVS · CC1–4 rear · PS33 4+4 · ext CDU
+                CT/NVS · CC1–4 rear · PS33 4+4 · DLC
               </p>
             </div>
           </div>
