@@ -13,3 +13,5 @@ screenshots/
 *.tar.gz
 routeTree.gen.ts
 src/routeTree.gen.ts
+.grok/
+.node_modules.lock
