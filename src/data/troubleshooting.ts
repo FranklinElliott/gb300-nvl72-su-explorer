@@ -82,7 +82,6 @@ export const VENDOR_META: Record<
  * to Dell ProSupport / NVIDIA enterprise support and site EOPs on live systems.
  */
 export const TROUBLESHOOTING_GUIDE: GuideSection[] = [
-  // ─── Cooling ─────────────────────────────────────────────
   {
     id: "leak-detect",
     category: "Cooling",
@@ -210,8 +209,6 @@ export const TROUBLESHOOTING_GUIDE: GuideSection[] = [
     tags: ["cold plate", "QDC", "single tray", "ΔT"],
     sources: ["Dell CT/NVS DLC FRU procedures"],
   },
-
-  // ─── Power ───────────────────────────────────────────────
   {
     id: "ps33-bank",
     category: "Power",
@@ -320,8 +317,6 @@ export const TROUBLESHOOTING_GUIDE: GuideSection[] = [
     tags: ["AC", "phase", "PDU", "UPS"],
     sources: ["Dell PS33 AC input requirements", "Site electrical drawings"],
   },
-
-  // ─── Fabric / NVLink (NVIDIA + Dell mate path) ───────────
   {
     id: "nvlink-error",
     category: "Fabric",
@@ -472,8 +467,6 @@ export const TROUBLESHOOTING_GUIDE: GuideSection[] = [
     tags: ["B300", "XID", "GPU", "UUID", "enum"],
     sources: ["NVIDIA XID reference", "Dell XE9712 CT replacement"],
   },
-
-  // ─── Networking ──────────────────────────────────────────
   {
     id: "cx8-down",
     category: "Networking",
@@ -554,8 +547,6 @@ export const TROUBLESHOOTING_GUIDE: GuideSection[] = [
     tags: ["NCCL", "topology", "AllReduce", "performance"],
     sources: ["NVIDIA NCCL troubleshooting / performance"],
   },
-
-  // ─── Management ──────────────────────────────────────────
   {
     id: "idrac-oob",
     category: "Management",
@@ -595,15 +586,15 @@ export const TROUBLESHOOTING_GUIDE: GuideSection[] = [
       "Wrong Service Tag / model after sled swap",
       "Firmware compliance jobs fail",
     ],
-    checks: [
-      "Discovery range and credentials",
-      "Whether BMC was reset to factory",
-      "Duplicate IPs after clone images",
-    ],
     actions: [
       "Rediscover device; refresh inventory",
       "Re-apply Dell firmware baseline catalog",
       "Fix DNS/certs for Redfish",
+    ],
+    checks: [
+      "Discovery range and credentials",
+      "Whether BMC was reset to factory",
+      "Duplicate IPs after clone images",
     ],
     relatedKinds: ["management", "compute"],
     tags: ["OME", "inventory", "firmware catalog", "Redfish"],
@@ -660,8 +651,6 @@ export const TROUBLESHOOTING_GUIDE: GuideSection[] = [
     tags: ["firmware", "compliance", "support matrix", "bundle"],
     sources: ["Dell support matrix / DUP catalog", "NVIDIA enterprise driver notes"],
   },
-
-  // ─── Compute ─────────────────────────────────────────────
   {
     id: "tray-offline",
     category: "Compute",
@@ -741,8 +730,6 @@ export const TROUBLESHOOTING_GUIDE: GuideSection[] = [
     tags: ["NVMe", "E1.S", "M.2", "boot"],
     sources: ["Dell XE9712 storage service"],
   },
-
-  // ─── Cluster / ops ───────────────────────────────────────
   {
     id: "su-scaleout",
     category: "Cluster",
@@ -858,6 +845,23 @@ export const GUIDE_CATEGORIES = Array.from(
   new Set(TROUBLESHOOTING_GUIDE.map((g) => g.category)),
 ).sort();
 
+/** Match whole tokens so short queries like "ber" do not hit "number". */
+function haystackMatch(hay: string, token: string): boolean {
+  if (token.length <= 2) {
+    return new RegExp(`(?:^|[^a-z0-9])${escapeReg(token)}(?:$|[^a-z0-9])`, "i").test(
+      hay,
+    );
+  }
+  if (token.length <= 4) {
+    return new RegExp(`(?:^|[^a-z0-9])${escapeReg(token)}`, "i").test(hay);
+  }
+  return hay.includes(token);
+}
+
+function escapeReg(s: string): string {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
 export function searchGuide(
   query: string,
   opts: {
@@ -889,6 +893,7 @@ export function searchGuide(
     }
     if (tokens.length === 0) return true;
     const hay = [
+      g.id,
       g.title,
       g.summary,
       g.category,
@@ -901,7 +906,7 @@ export function searchGuide(
     ]
       .join(" ")
       .toLowerCase();
-    return tokens.every((t) => hay.includes(t));
+    return tokens.every((t) => haystackMatch(hay, t));
   }).sort((a, b) => {
     const sev = SEVERITY_META[a.severity].order - SEVERITY_META[b.severity].order;
     if (sev !== 0) return sev;
