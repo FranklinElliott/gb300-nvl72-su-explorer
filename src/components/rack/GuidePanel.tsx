@@ -45,8 +45,8 @@ export function GuidePanel({ filterKind, onClearKindFilter }: GuidePanelProps) {
           <h2 className="text-base font-semibold text-fg">Dell operator guide</h2>
         </div>
         <p className="mt-1 text-xs leading-relaxed text-muted">
-          Playbook for one PowerEdge XE9712 / IR9048 SU. Educational reference — follow Dell
-          ProSupport procedures and site EOPs on production systems.
+          XE9712 / IR9048 SU — external CDU, dual PS33 banks, CT/NVS elevation. Follow
+          ProSupport + site EOPs on live systems.
         </p>
 
         <div className="relative mt-3">
@@ -54,7 +54,7 @@ export function GuidePanel({ filterKind, onClearKindFilter }: GuidePanelProps) {
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search iDRAC, leak, PS33, NVLink…"
+            placeholder="Search CDU, PS33, CT, NVS, iDRAC…"
             className="h-10 w-full rounded-lg border border-border bg-surface-2 pl-9 pr-3 text-sm text-fg placeholder:text-subtle outline-none ring-accent/40 focus:ring-2"
           />
         </div>

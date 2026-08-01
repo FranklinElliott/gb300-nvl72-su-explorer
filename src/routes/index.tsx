@@ -14,7 +14,6 @@ import { GuidePanel } from "@/components/rack/GuidePanel";
 import {
   COMPONENT_COLORS,
   KIND_LEGEND,
-  RACK_SPECS,
   type ComponentKind,
 } from "@/data/rack";
 import { cn } from "@/lib/utils";
@@ -52,7 +51,7 @@ function Home() {
                 Dell XE9712 · GB300 NVL72
               </h1>
               <p className="truncate font-mono text-[10px] text-muted md:text-[11px]">
-                CT18–9 · NVS9–1 · CT8–1 · IR9048
+                PS33×4 top · CT18–9 · NVS9–1 · CT8–1 · PS33×4 bot · ext CDU
               </p>
             </div>
           </div>
@@ -130,14 +129,14 @@ function Home() {
             })}
           </div>
 
-          <div className="pointer-events-none absolute bottom-12 right-3 hidden max-w-[220px] rounded-lg border border-border bg-surface/90 p-2.5 text-[10px] leading-relaxed text-muted backdrop-blur-sm md:block">
+          <div className="pointer-events-none absolute bottom-12 right-3 hidden max-w-[230px] rounded-lg border border-border bg-surface/90 p-2.5 text-[10px] leading-relaxed text-muted backdrop-blur-sm md:block">
             <div className="mb-1 flex items-center gap-1 font-medium text-fg">
               <Info className="size-3" />
-              Elevation
+              Layout
             </div>
-            Top → bottom: <span className="text-fg">CT18–9</span> ·{" "}
-            <span className="text-fg">NVS9–1</span> · <span className="text-fg">CT8–1</span>{" "}
-            over PS33. {RACK_SPECS.support} on live systems.
+            <span className="text-fg">4 PS33</span> top + <span className="text-fg">4 PS33</span>{" "}
+            bottom. <span className="text-fg">CDU external</span> (sidecar / in-row) with hoses into
+            rack manifolds.
           </div>
         </section>
 
