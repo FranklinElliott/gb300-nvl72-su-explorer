@@ -42,8 +42,8 @@ function Home() {
   };
 
   return (
-    <div className="flex h-dvh flex-col overflow-hidden bg-bg">
-      <header className="z-20 flex shrink-0 items-center justify-between gap-3 border-b border-border bg-surface/90 px-3 py-2.5 backdrop-blur-md md:px-5">
+    <div className="flex h-dvh max-h-dvh flex-col overflow-hidden bg-bg">
+      <header className="z-20 flex shrink-0 flex-wrap items-center justify-between gap-2 border-b border-border bg-surface/90 px-3 py-2.5 backdrop-blur-md sm:gap-3 md:px-5">
         <div className="min-w-0">
           <div className="flex items-center gap-2">
             <div className="flex size-8 items-center justify-center rounded-md bg-accent text-accent-fg">
@@ -80,7 +80,7 @@ function Home() {
                 setHighlightKind("cartridge");
               }}
               className={cn(
-                "inline-flex h-8 items-center gap-1 rounded-md px-2.5 text-xs font-medium transition-colors",
+                "inline-flex h-9 items-center gap-1 rounded-md px-2.5 text-xs font-medium transition-colors touch-manipulation",
                 viewMode === "rear" ? "bg-surface-3 text-fg" : "text-muted hover:text-fg",
               )}
             >
@@ -118,7 +118,7 @@ function Home() {
       </header>
 
       <div className="grid min-h-0 flex-1 grid-cols-1 lg:grid-cols-[1fr_minmax(320px,400px)]">
-        <section className="relative min-h-[42vh] border-b border-border lg:min-h-0 lg:border-b-0 lg:border-r">
+        <section className="relative min-h-[48dvh] border-b border-border lg:min-h-0 lg:border-b-0 lg:border-r">
           <ClientRackScene
             selectedId={selectedId}
             highlightKind={highlightKind}
@@ -212,7 +212,7 @@ function ControlToggle({
       type="button"
       onClick={onClick}
       className={cn(
-        "inline-flex h-9 items-center gap-1.5 rounded-lg border px-2.5 text-xs font-medium transition-colors",
+        "inline-flex h-10 items-center gap-1.5 rounded-lg border px-2.5 text-xs font-medium transition-colors touch-manipulation",
         active
           ? "border-accent/50 bg-accent/15 text-accent"
           : "border-border bg-surface-2 text-muted hover:text-fg",
